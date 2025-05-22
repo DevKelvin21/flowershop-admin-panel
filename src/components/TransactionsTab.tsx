@@ -7,7 +7,7 @@ const transactionsMock = [
 function TransactionsTab() {
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4 text-rose-700">Transactions to Review</h2>
+      <h2 className="text-xl font-semibold mb-4 text-rose-700">Transacciones por Revisar</h2>
       <table className="min-w-full border border-rose-100 rounded-lg overflow-hidden">
         <thead className="bg-rose-50">
           <tr>

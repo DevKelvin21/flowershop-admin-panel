@@ -9,27 +9,25 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-rose-600 text-white py-4 px-8 shadow">
-        <h1 className="text-2xl font-bold tracking-wide">Floristeria Morale's</h1>
+      <header className="bg-rose-600 text-white px-8 shadow flex flex-col md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl font-bold tracking-wide py-4">Floristeria Morale's</h1>
+        <nav className="flex space-x-2 pb-4 md:pb-0">
+          {['Reporte', 'Inventario', 'Transacciones por Revisar'].map((label, idx) => (
+            <button
+              key={label}
+              className={`px-4 py-2 rounded font-medium transition ${
+                tab === idx
+                  ? 'bg-rose-500 text-white shadow'
+                  : 'bg-rose-100 text-rose-700 hover:bg-rose-200 hover:text-rose-900'
+              }`}
+              onClick={() => setTab(idx)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </header>
       <main className="flex-1 p-6 flex flex-col items-center">
-        <div className="mb-6">
-          <nav className="flex space-x-2">
-            {['Dashboard', 'Inventory', 'Transactions'].map((label, idx) => (
-              <button
-                key={label}
-                className={`px-4 py-2 rounded-t font-medium transition ${
-                  tab === idx
-                    ? 'bg-rose-500 text-white shadow'
-                    : 'bg-rose-50 text-rose-800 hover:bg-rose-100'
-                }`}
-                onClick={() => setTab(idx)}
-              >
-                {label}
-              </button>
-            ))}
-          </nav>
-        </div>
         <section className="w-full max-w-8xl bg-white rounded shadow p-6 border border-rose-100">
           {tab === 0 && <DashboardTab />}
           {tab === 1 && <InventoryTab />}

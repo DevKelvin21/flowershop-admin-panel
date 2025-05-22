@@ -70,7 +70,7 @@ function InventoryTab() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4 text-rose-700">Inventory</h2>
+      <h2 className="text-xl font-semibold mb-4 text-rose-700">Inventario</h2>
       <EditableTable
         data={inventory}
         columns={[
