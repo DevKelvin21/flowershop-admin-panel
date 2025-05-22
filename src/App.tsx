@@ -12,7 +12,7 @@ function App() {
       <header className="bg-rose-600 text-white px-8 shadow flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold tracking-wide py-4">Floristeria Morale's</h1>
         <nav className="flex space-x-2 pb-4 md:pb-0">
-          {['Reporte', 'Inventario', 'Transacciones por Revisar'].map((label, idx) => (
+          {['Reporte', 'Inventario', 'Pérdida', 'Transacciones por Revisar'].map((label, idx) => (
             <button
               key={label}
               className={`px-4 py-2 rounded font-medium transition ${
@@ -31,7 +31,13 @@ function App() {
         <section className="w-full max-w-8xl bg-white rounded shadow p-6 border border-rose-100">
           {tab === 0 && <DashboardTab />}
           {tab === 1 && <InventoryTab />}
-          {tab === 2 && <TransactionsTab />}
+          {tab === 2 && (
+            <div className="flex flex-col items-center">
+              <h2 className="text-xl font-semibold mb-4 text-rose-700">Pérdida</h2>
+              <p className="text-gray-700">Aquí puedes ver la información sobre pérdidas.</p>
+            </div>
+          )}
+          {tab === 3 && <TransactionsTab />}
         </section>
       </main>
     </div>
