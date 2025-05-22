@@ -18,8 +18,8 @@ function TransactionsTab() {
           </tr>
         </thead>
         <tbody>
-          {transactionsMock.map((txn, idx) => (
-            <tr key={idx} className="even:bg-rose-50">
+          {transactionsMock.map((txn) => (
+            <tr key={txn.transaction_id} className="even:bg-rose-50">
               <td className="px-4 py-2">{txn.transaction_id}</td>
               <td className="px-4 py-2">{txn.item}</td>
               <td className="px-4 py-2">${txn.total_sale_price}</td>
