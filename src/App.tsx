@@ -30,7 +30,7 @@ function App() {
             ))}
           </nav>
         </div>
-        <section className="w-full max-w-4xl bg-white rounded shadow p-6 border border-rose-100">
+        <section className="w-full max-w-8xl bg-white rounded shadow p-6 border border-rose-100">
           {tab === 0 && <DashboardTab />}
           {tab === 1 && <InventoryTab />}
           {tab === 2 && <TransactionsTab />}
