@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getInventory, type InventoryItem } from '../db/utils'
+import { getInventory, type InventoryItem, updateInventory, removeInventoryItem } from '../db/utils'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import ConfirmModal from './ConfirmModal'
@@ -179,15 +179,26 @@ function InventoryTab() {
           setSelectedItem(null);
           setPendingEdit(null);
         }}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (modalType === 'delete') {
-            setInventory(inv => inv.filter(item => item !== selectedItem));
+            if (selectedItem && selectedItem.item) {
+              try {
+                await removeInventoryItem(selectedItem.item);
+                setInventory(inv => inv.filter(item => item !== selectedItem));
+              } catch (err) {
+                setError('Error eliminando el artículo.');
+              }
+            }
           } else if (modalType === 'edit' && pendingEdit) {
-            setInventory(inv =>
-              inv.map((row, idx) =>
+            try {
+              const updated = inventory.map((row, idx) =>
                 idx === pendingEdit.rowIdx ? { ...row, [pendingEdit.colKey]: pendingEdit.value } : row
-              )
-            );
+              );
+              await updateInventory(updated);
+              setInventory(updated);
+            } catch (err) {
+              setError('Error editando el artículo.');
+            }
           }
           setModalOpen(false);
           setModalType(null);
