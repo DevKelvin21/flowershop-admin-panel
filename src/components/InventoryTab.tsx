@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getInventory, type InventoryItem, updateInventory, removeInventoryItem } from '../db/utils'
+import { getInventory, type InventoryItem, updateInventoryItem, removeInventoryItem } from '../db/utils'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import ConfirmModal from './ConfirmModal'
@@ -183,7 +183,7 @@ function InventoryTab() {
           if (modalType === 'delete') {
             if (selectedItem && selectedItem.item) {
               try {
-                await removeInventoryItem(selectedItem.item);
+                await removeInventoryItem(selectedItem);
                 setInventory(inv => inv.filter(item => item !== selectedItem));
               } catch (err) {
                 setError('Error eliminando el artículo.');
@@ -191,11 +191,17 @@ function InventoryTab() {
             }
           } else if (modalType === 'edit' && pendingEdit) {
             try {
-              const updated = inventory.map((row, idx) =>
-                idx === pendingEdit.rowIdx ? { ...row, [pendingEdit.colKey]: pendingEdit.value } : row
+              const originalItem = inventory[pendingEdit.rowIdx];
+              const updatedItem: InventoryItem = {
+                ...originalItem,
+                [pendingEdit.colKey]: pendingEdit.value,
+              };
+              await updateInventoryItem(updatedItem);
+              setInventory(inv =>
+                inv.map((row, idx) =>
+                  idx === pendingEdit.rowIdx ? updatedItem : row
+                )
               );
-              await updateInventory(updated);
-              setInventory(updated);
             } catch (err) {
               setError('Error editando el artículo.');
             }

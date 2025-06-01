@@ -1,6 +1,5 @@
-import type { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { db } from "./firestore";
-import { collection, getDocs, doc, writeBatch } from "firebase/firestore";
+import { collection, getDocs, doc, writeBatch, deleteDoc } from "firebase/firestore";
 
 
 export type InventoryItem = {
@@ -8,7 +7,7 @@ export type InventoryItem = {
     item: string;
     quantity: number;
     quality: string;
-    lastUpdated?: Timestamp | FieldValue;
+    lastUpdated?: string;
 };
 
 export async function getInventory(): Promise<InventoryItem[]> {
@@ -18,6 +17,11 @@ export async function getInventory(): Promise<InventoryItem[]> {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem));
 }
 
+function formatDateTime(date: Date) {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 export async function updateInventory(items: InventoryItem[]): Promise<void> {
     const batch = writeBatch(db);
 
@@ -25,10 +29,18 @@ export async function updateInventory(items: InventoryItem[]): Promise<void> {
         const docId = item.id ?? `${item.item}_${item.quality}`;
         const itemRef = doc(db, "inventory", docId);
         const { id, ...itemData } = item;
+        itemData.lastUpdated = formatDateTime(new Date());
         batch.set(itemRef, itemData);
     }
 
     await batch.commit();
+}
+
+export async function updateInventoryItem(item: InventoryItem): Promise<void> {
+    const docId = item.id ?? `${item.item}_${item.quality}`;
+    const itemRef = doc(db, "inventory", docId);
+    const itemData = { ...item, lastUpdated: formatDateTime(new Date()) };
+    await writeBatch(db).set(itemRef, itemData).commit();
 }
 
 export async function addInventoryItem(item: InventoryItem): Promise<void> {
@@ -37,8 +49,8 @@ export async function addInventoryItem(item: InventoryItem): Promise<void> {
     await updateInventory(inventory);
 }
 
-export async function removeInventoryItem(itemName: string): Promise<void> {
-    let inventory = await getInventory();
-    inventory = inventory.filter(item => item.item !== itemName);
-    await updateInventory(inventory);
+export async function removeInventoryItem(item: InventoryItem): Promise<void> {
+    const docId = item.id ?? `${item.item}_${item.quality}`;
+    const itemRef = doc(db, "inventory", docId);
+    await deleteDoc(itemRef);
 }
