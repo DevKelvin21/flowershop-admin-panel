@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getInventory, type InventoryItem } from '../db/utils'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import ConfirmModal from './ConfirmModal'
 
 function EditableTable({ data, columns, onChange, onDelete }: {
   data: any[],
@@ -77,6 +78,10 @@ function InventoryTab() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'delete' | 'edit' | null>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [pendingEdit, setPendingEdit] = useState<{ rowIdx: number, colKey: string, value: any } | null>(null);
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -151,15 +156,45 @@ function InventoryTab() {
           { key: 'lastUpdated', label: 'Última Actualización' }
         ]}
         onChange={(rowIdx, colKey, value) => {
-          setInventory(inv =>
-            inv.map((row, idx) =>
-              idx === rowIdx ? { ...row, [colKey]: value } : row
-            )
-          )
+          setPendingEdit({ rowIdx, colKey, value });
+          setSelectedItem(filteredInventory[rowIdx]);
+          setModalType('edit');
+          setModalOpen(true);
         }}
         onDelete={(rowIdx) => {
-          setInventory(inv => inv.filter((_, idx) => idx !== rowIdx))
+          setSelectedItem(filteredInventory[rowIdx]);
+          setModalType('delete');
+          setModalOpen(true);
         }}
+      />
+      <ConfirmModal
+        open={modalOpen}
+        title={modalType === 'delete' ? 'Confirmar eliminación' : 'Confirmar edición'}
+        message={modalType === 'delete' ? '¿Estás seguro de que deseas eliminar este artículo del inventario?' : '¿Estás seguro de que deseas editar este artículo?'}
+        item={selectedItem}
+        onCancel={() => {
+          setModalOpen(false);
+          setModalType(null);
+          setSelectedItem(null);
+          setPendingEdit(null);
+        }}
+        onConfirm={() => {
+          if (modalType === 'delete') {
+            setInventory(inv => inv.filter(item => item !== selectedItem));
+          } else if (modalType === 'edit' && pendingEdit) {
+            setInventory(inv =>
+              inv.map((row, idx) =>
+                idx === pendingEdit.rowIdx ? { ...row, [pendingEdit.colKey]: pendingEdit.value } : row
+              )
+            );
+          }
+          setModalOpen(false);
+          setModalType(null);
+          setSelectedItem(null);
+          setPendingEdit(null);
+        }}
+        confirmLabel={modalType === 'delete' ? 'Eliminar' : 'Editar'}
+        cancelLabel="Cancelar"
       />
     </div>
   )
