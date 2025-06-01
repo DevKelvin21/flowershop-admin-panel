@@ -65,6 +65,7 @@ function InventoryTab() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -90,11 +91,27 @@ function InventoryTab() {
     return <div className="text-red-600 font-semibold">{error}</div>;
   }
 
+  const filteredInventory = inventory.filter(item => {
+    const searchText = search.toLowerCase();
+    return (
+      (item.item && item.item.toLowerCase().includes(searchText)) ||
+      (item.quantity && String(item.quantity).toLowerCase().includes(searchText)) ||
+      (item.quality && String(item.quality).toLowerCase().includes(searchText))
+    );
+  });
+
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4 text-rose-700">Inventario</h2>
+      <input
+        type="text"
+        className="mb-4 px-3 py-2 border border-rose-200 rounded w-full focus:ring-2 focus:ring-rose-400"
+        placeholder="Buscar en inventario..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+      />
       <EditableTable
-        data={inventory || []}
+        data={filteredInventory}
         columns={[
           { key: 'item', label: 'Item Name' },
           { key: 'quantity', label: 'Quantity' },
