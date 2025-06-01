@@ -148,6 +148,7 @@ function InventoryTab() {
           { key: 'item', label: 'Nombre de Articulo' },
           { key: 'quantity', label: 'Cantidad' },
           { key: 'quality', label: 'Calidad' },
+          { key: 'lastUpdated', label: 'Última Actualización' }
         ]}
         onChange={(rowIdx, colKey, value) => {
           setInventory(inv =>
