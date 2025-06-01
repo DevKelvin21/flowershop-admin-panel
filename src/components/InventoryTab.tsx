@@ -172,6 +172,7 @@ function InventoryTab() {
         title={modalType === 'delete' ? 'Confirmar eliminación' : 'Confirmar edición'}
         message={modalType === 'delete' ? '¿Estás seguro de que deseas eliminar este artículo del inventario?' : '¿Estás seguro de que deseas editar este artículo?'}
         item={selectedItem}
+        pendingEdit={modalType === 'edit' ? pendingEdit : undefined}
         onCancel={() => {
           setModalOpen(false);
           setModalType(null);
