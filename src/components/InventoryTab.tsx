@@ -1,11 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { getInventory, type InventoryItem } from '../db/utils'
 
-const initialInventory = [
-  { name: 'Roses', quantity: 120, quality: 'Excellent' },
-  { name: 'Tulips', quantity: 80, quality: 'Good' },
-  { name: 'Party Balloons', quantity: 200, quality: 'Fair' },
-  { name: 'Gift Baskets', quantity: 30, quality: 'Excellent' },
-]
+
 
 function EditableTable({ data, columns, onChange }: {
   data: any[],
@@ -66,15 +62,41 @@ function EditableTable({ data, columns, onChange }: {
 }
 
 function InventoryTab() {
-  const [inventory, setInventory] = useState(initialInventory)
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchInventory = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const items = await getInventory();
+        setInventory(items);
+      } catch (error: any) {
+        setError(error?.message || 'Error fetching inventory');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchInventory()
+  }, [])
+
+  if (loading) {
+    return <div className="text-rose-700">Cargando inventario...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-600 font-semibold">{error}</div>;
+  }
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4 text-rose-700">Inventario</h2>
       <EditableTable
-        data={inventory}
+        data={inventory || []}
         columns={[
-          { key: 'name', label: 'Item Name' },
+          { key: 'item', label: 'Item Name' },
           { key: 'quantity', label: 'Quantity' },
           { key: 'quality', label: 'Quality' },
         ]}
