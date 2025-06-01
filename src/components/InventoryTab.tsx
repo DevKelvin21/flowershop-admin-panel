@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { getInventory, type InventoryItem } from '../db/utils'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTrash } from '@fortawesome/free-solid-svg-icons'
 
-
-
-function EditableTable({ data, columns, onChange }: {
+function EditableTable({ data, columns, onChange, onDelete }: {
   data: any[],
   columns: { key: string, label: string }[],
-  onChange: (rowIdx: number, colKey: string, value: any) => void
+  onChange: (rowIdx: number, colKey: string, value: any) => void,
+  onDelete: (rowIdx: number) => void
 }) {
   const [editing, setEditing] = useState<{ row: number, col: string } | null>(null)
   const [editValue, setEditValue] = useState('')
@@ -18,6 +19,7 @@ function EditableTable({ data, columns, onChange }: {
           {columns.map(col => (
             <th key={col.key} className="px-4 py-2 text-left font-semibold text-rose-800">{col.label}</th>
           ))}
+          <th className="px-4 py-2 text-left font-semibold text-rose-800">Eliminar</th>
         </tr>
       </thead>
       <tbody>
@@ -54,6 +56,14 @@ function EditableTable({ data, columns, onChange }: {
                 )}
               </td>
             ))}
+            <td className="px-4 py-2">
+              <button
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                onClick={() => onDelete(rowIdx)}
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </button>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -113,9 +123,9 @@ function InventoryTab() {
       <EditableTable
         data={filteredInventory}
         columns={[
-          { key: 'item', label: 'Item Name' },
-          { key: 'quantity', label: 'Quantity' },
-          { key: 'quality', label: 'Quality' },
+          { key: 'item', label: 'Nombre de Articulo' },
+          { key: 'quantity', label: 'Cantidad' },
+          { key: 'quality', label: 'Calidad' },
         ]}
         onChange={(rowIdx, colKey, value) => {
           setInventory(inv =>
@@ -123,6 +133,9 @@ function InventoryTab() {
               idx === rowIdx ? { ...row, [colKey]: value } : row
             )
           )
+        }}
+        onDelete={(rowIdx) => {
+          setInventory(inv => inv.filter((_, idx) => idx !== rowIdx))
         }}
       />
     </div>
