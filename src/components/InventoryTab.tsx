@@ -76,6 +76,7 @@ function InventoryTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -101,25 +102,46 @@ function InventoryTab() {
     return <div className="text-red-600 font-semibold">{error}</div>;
   }
 
+  const qualityTypes = Array.from(new Set(inventory.map(item => item.quality).filter(Boolean)));
+
   const filteredInventory = inventory.filter(item => {
     const searchText = search.toLowerCase();
-    return (
+    const matchesSearch =
       (item.item && item.item.toLowerCase().includes(searchText)) ||
       (item.quantity && String(item.quantity).toLowerCase().includes(searchText)) ||
-      (item.quality && String(item.quality).toLowerCase().includes(searchText))
-    );
+      (item.quality && String(item.quality).toLowerCase().includes(searchText));
+    let matchesFilter = true;
+    if (filter === 'outofstock') {
+      matchesFilter = Number(item.quantity) === 0;
+    } else if (filter !== 'all') {
+      matchesFilter = item.quality === filter;
+    }
+    return matchesSearch && matchesFilter;
   });
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4 text-rose-700">Inventario</h2>
-      <input
-        type="text"
-        className="mb-4 px-3 py-2 border border-rose-200 rounded w-full focus:ring-2 focus:ring-rose-400"
-        placeholder="Buscar en inventario..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-      />
+      <div className="flex gap-2 mb-4">
+        <input
+          type="text"
+          className="px-3 py-2 border border-rose-200 rounded w-full focus:ring-2 focus:ring-rose-400"
+          placeholder="Buscar en inventario..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <select
+          className="px-3 py-2 border border-rose-200 rounded focus:ring-2 focus:ring-rose-400"
+          value={filter}
+          onChange={e => setFilter(e.target.value)}
+        >
+          <option value="all">Todos</option>
+          <option value="outofstock">Sin stock</option>
+          {qualityTypes.map(q => (
+            <option key={q} value={q}>{q}</option>
+          ))}
+        </select>
+      </div>
       <EditableTable
         data={filteredInventory}
         columns={[
