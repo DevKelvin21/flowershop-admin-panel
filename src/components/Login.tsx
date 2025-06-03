@@ -13,17 +13,27 @@ function Login() {
 
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Error during sign-in:", error);
+      alert("Failed to sign in. Please try again.");
+    }
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error during sign-out:", error);
+      alert("Failed to sign out. Please try again.");
+    }
   };
 
   if (user) {
     return (
       <div className="flex flex-col items-center gap-2 my-8">
-        <img src={user.photoURL || ''} alt="avatar" className="w-16 h-16 rounded-full" />
+        <img src={user.photoURL || ''} alt={user.displayName ? `${user.displayName}'s avatar` : 'User avatar'} className="w-16 h-16 rounded-full" />
         <div className="text-lg font-semibold">{user.displayName}</div>
         <button className="px-4 py-2 bg-rose-600 text-white rounded" onClick={handleLogout}>
           Cerrar sesión
