@@ -5,7 +5,7 @@ interface ConfirmModalProps {
   title: string;
   message: string;
   item: any;
-  pendingEdit?: { colKey: string; value: any } | null;
+  pendingEdit?: Omit<{ colKey: string; value: any; rowIdx?: number }, 'rowIdx'> | null;
   onCancel: () => void;
   onConfirm: () => void;
   confirmLabel?: string;
@@ -13,7 +13,7 @@ interface ConfirmModalProps {
 }
 
 const fieldLabels: Record<string, string> = {
-  item: 'Nombre de Articulo',
+  item: 'Nombre de Artículo',
   quantity: 'Cantidad',
   quality: 'Calidad',
   lastUpdated: 'Última Actualización',
