@@ -184,14 +184,16 @@ function InventoryTab() {
             if (selectedItem && selectedItem.item) {
               try {
                 await removeInventoryItem(selectedItem);
-                setInventory(inv => inv.filter(item => item !== selectedItem));
+                setInventory(inv => inv.filter(item => item.id !== selectedItem.id));
               } catch (err) {
                 setError('Error eliminando el artículo.');
               }
             }
-          } else if (modalType === 'edit' && pendingEdit) {
+          } else if (modalType === 'edit' && pendingEdit && selectedItem) {
             try {
-              const originalItem = inventory[pendingEdit.rowIdx];
+              const originalIdx = inventory.findIndex(item => item.id === selectedItem.id);
+              if (originalIdx === -1) throw new Error('No se encontró el artículo original.');
+              const originalItem = inventory[originalIdx];
               const updatedItem: InventoryItem = {
                 ...originalItem,
                 [pendingEdit.colKey]: pendingEdit.value,
@@ -199,7 +201,7 @@ function InventoryTab() {
               await updateInventoryItem(updatedItem);
               setInventory(inv =>
                 inv.map((row, idx) =>
-                  idx === pendingEdit.rowIdx ? updatedItem : row
+                  idx === originalIdx ? updatedItem : row
                 )
               );
             } catch (err) {
