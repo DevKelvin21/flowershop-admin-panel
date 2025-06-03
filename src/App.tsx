@@ -1,11 +1,25 @@
-import { useState } from 'react'
-import './App.css'
-import DashboardTab from './components/DashboardTab.tsx'
-import InventoryTab from './components/InventoryTab.tsx'
-import TransactionsTab from './components/TransactionsTab.tsx'
+import { useEffect, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './db/firestore';
+import './App.css';
+import DashboardTab from './components/DashboardTab.tsx';
+import InventoryTab from './components/InventoryTab.tsx';
+import TransactionsTab from './components/TransactionsTab.tsx';
+import Login from './components/Login.tsx';
+import type { User } from 'firebase/auth';
 
 function App() {
-  const [tab, setTab] = useState(0)
+  const [tab, setTab] = useState(0);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, setUser);
+    return () => unsub();
+  }, []);
+
+  if (!user) {
+    return <Login />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -41,7 +55,7 @@ function App() {
         </section>
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
