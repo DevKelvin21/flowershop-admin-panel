@@ -1,5 +1,5 @@
 import { db } from "./firestore";
-import { collection, getDocs, doc, writeBatch, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, doc, writeBatch, deleteDoc, setDoc } from "firebase/firestore";
 
 
 export type InventoryItem = {
@@ -44,9 +44,10 @@ export async function updateInventoryItem(item: InventoryItem): Promise<void> {
 }
 
 export async function addInventoryItem(item: InventoryItem): Promise<void> {
-    const inventory = await getInventory();
-    inventory.push(item);
-    await updateInventory(inventory);
+    const docId = item.id ?? `${item.item}_${item.quality}`;
+    const itemRef = doc(db, "inventory", docId);
+    const itemData = { ...item, lastUpdated: formatDateTime(new Date()) };
+    await setDoc(itemRef, itemData);
 }
 
 export async function removeInventoryItem(item: InventoryItem): Promise<void> {
