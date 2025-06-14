@@ -1,5 +1,5 @@
 import { db } from "./firestore";
-import { collection, getDocs, doc, writeBatch, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, writeBatch, deleteDoc, setDoc, query, where } from "firebase/firestore";
 
 
 export type InventoryItem = {
@@ -83,10 +83,11 @@ export async function getInventoryLoss(): Promise<InventoryLoss[]> {
 }
 
 export async function addInventoryLoss(loss: InventoryLoss): Promise<void> {
-
-    // Get current inventory
-    const invSnap = await getDocs(collection(db, "inventory"));
-    const invItem = invSnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem)).find(i => i.item === loss.item && i.quality === loss.quality);
+    // Query only the relevant inventory item
+    const inventoryCollection = collection(db, "inventory");
+    const q = query(inventoryCollection, where("item", "==", loss.item), where("quality", "==", loss.quality));
+    const invSnap = await getDocs(q);
+    const invItem = invSnap.docs.length > 0 ? { id: invSnap.docs[0].id, ...invSnap.docs[0].data() } as InventoryItem : null;
     if (!invItem || invItem.quantity < loss.quantity) throw new Error('No hay suficiente inventario para registrar la pérdida.');
     await updateInventoryItem({ ...invItem, quantity: invItem.quantity - loss.quantity });
     // Add loss doc
@@ -95,9 +96,11 @@ export async function addInventoryLoss(loss: InventoryLoss): Promise<void> {
 }
 
 export async function removeInventoryLoss(loss: InventoryLoss): Promise<void> {
-    // Get current inventory
-    const invSnap = await getDocs(collection(db, "inventory"));
-    const invItem = invSnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem)).find(i => i.item === loss.item && i.quality === loss.quality);
+    // Query only the relevant inventory item
+    const inventoryCollection = collection(db, "inventory");
+    const q = query(inventoryCollection, where("item", "==", loss.item), where("quality", "==", loss.quality));
+    const invSnap = await getDocs(q);
+    const invItem = invSnap.docs.length > 0 ? { id: invSnap.docs[0].id, ...invSnap.docs[0].data() } as InventoryItem : null;
     if (!invItem) throw new Error('No se encontró el artículo en inventario.');
     await updateInventoryItem({ ...invItem, quantity: invItem.quantity + loss.quantity });
     // Remove loss doc
