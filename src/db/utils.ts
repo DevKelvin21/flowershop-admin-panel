@@ -14,7 +14,16 @@ export async function getInventory(): Promise<InventoryItem[]> {
     const inventoryCollection = collection(db, "inventory");
     const snapshot = await getDocs(inventoryCollection);
 
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem));
+    return snapshot.docs.map(docSnap => {
+        const data = docSnap.data() as InventoryItem;
+        let formattedLastUpdated = data.lastUpdated;
+        if (formattedLastUpdated && /T/.test(formattedLastUpdated)) {
+            // Parse ISO string and format
+            const date = new Date(formattedLastUpdated);
+            formattedLastUpdated = formatDateTime(date);
+        }
+        return { id: docSnap.id, ...data, lastUpdated: formattedLastUpdated };
+    });
 }
 
 function formatDateTime(date: Date) {
