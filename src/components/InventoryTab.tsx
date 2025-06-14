@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getInventory, type InventoryItem, updateInventoryItem, removeInventoryItem } from '../db/utils'
+import { getInventory, type InventoryItem, updateInventoryItem, removeInventoryItem, addInventoryItem } from '../db/utils'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 import ConfirmModal from './ConfirmModal'
@@ -72,7 +72,7 @@ function EditableTable({ data, columns, onChange, onDelete }: {
   )
 }
 
-function InventoryTab() {
+function InventoryTab({ userEmail }: { userEmail: string }) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +82,9 @@ function InventoryTab() {
   const [modalType, setModalType] = useState<'delete' | 'edit' | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [pendingEdit, setPendingEdit] = useState<{ rowIdx: number, colKey: string, value: any } | null>(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [newItem, setNewItem] = useState<{ item: string; quantity: string; quality: string; lastUpdated: string }>({ item: '', quantity: '', quality: '', lastUpdated: '' });
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const fetchInventory = async () => {
@@ -97,7 +100,7 @@ function InventoryTab() {
       }
     }
     fetchInventory()
-  }, [])
+  }, [refreshKey])
 
   if (loading) {
     return <div className="text-rose-700">Cargando inventario...</div>;
@@ -146,6 +149,12 @@ function InventoryTab() {
             <option key={q} value={q}>{q}</option>
           ))}
         </select>
+        <button
+          className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
+          onClick={() => setAddModalOpen(true)}
+        >
+          Agregar Inventario
+        </button>
       </div>
       <EditableTable
         data={filteredInventory}
@@ -183,7 +192,7 @@ function InventoryTab() {
           if (modalType === 'delete') {
             if (selectedItem && selectedItem.item) {
               try {
-                await removeInventoryItem(selectedItem);
+                await removeInventoryItem(selectedItem, userEmail);
                 setInventory(inv => inv.filter(item => item.id !== selectedItem.id));
               } catch (err) {
                 setError('Error eliminando el artículo.');
@@ -198,7 +207,7 @@ function InventoryTab() {
                 ...originalItem,
                 [pendingEdit.colKey]: pendingEdit.value,
               };
-              await updateInventoryItem(updatedItem);
+              await updateInventoryItem(updatedItem, userEmail);
               setInventory(inv =>
                 inv.map((row, idx) =>
                   idx === originalIdx ? updatedItem : row
@@ -216,6 +225,74 @@ function InventoryTab() {
         confirmLabel={modalType === 'delete' ? 'Eliminar' : 'Editar'}
         cancelLabel="Cancelar"
       />
+      {addModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-[90vw]">
+            <h3 className="text-lg font-semibold mb-4 text-rose-700">Agregar nuevo artículo</h3>
+            <form
+              onSubmit={async e => {
+                e.preventDefault();
+                try {
+                  await addInventoryItem({
+                    item: newItem.item,
+                    quantity: Number(newItem.quantity),
+                    quality: newItem.quality,
+                    lastUpdated: new Date().toISOString(),
+                  }, userEmail);
+                  setAddModalOpen(false);
+                  setNewItem({ item: '', quantity: '', quality: '', lastUpdated: '' });
+                  setRefreshKey(k => k + 1); // trigger inventory refresh
+                } catch (err) {
+                  setError('Error agregando el artículo.');
+                }
+              }}
+              className="flex flex-col gap-3"
+            >
+              <input
+                className="border border-rose-200 rounded px-3 py-2"
+                placeholder="Nombre de Articulo"
+                value={newItem.item}
+                onChange={e => setNewItem({ ...newItem, item: e.target.value })}
+                required
+              />
+              <input
+                className="border border-rose-200 rounded px-3 py-2"
+                placeholder="Cantidad"
+                type="number"
+                min="0"
+                value={newItem.quantity}
+                onChange={e => setNewItem({ ...newItem, quantity: e.target.value })}
+                required
+              />
+              <select
+                className="border border-rose-200 rounded px-3 py-2"
+                value={newItem.quality}
+                onChange={e => setNewItem({ ...newItem, quality: e.target.value })}
+                required
+              >
+                <option value="">Selecciona calidad</option>
+                <option value="special">Especial</option>
+                <option value="regular">Regular</option>
+              </select>
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800"
+                  onClick={() => setAddModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded bg-rose-600 hover:bg-rose-700 text-white"
+                >
+                  Agregar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
