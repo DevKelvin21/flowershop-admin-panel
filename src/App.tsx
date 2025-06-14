@@ -26,7 +26,7 @@ function App() {
     <div className="min-h-screen flex flex-col">
       <header className="bg-rose-600 text-white px-8 shadow flex flex-col md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold tracking-wide py-4">Floristeria Morale's</h1>
-        <nav className="flex space-x-2 pb-4 md:pb-0">
+        <nav className="flex space-x-2 pb-4 md:pb-0 items-center">
           {['Reporte', 'Inventario', 'Pérdida'].map((label, idx) => (
             <button
               key={label}
@@ -40,6 +40,18 @@ function App() {
               {label}
             </button>
           ))}
+          {/* User info and logout */}
+          {user && (
+            <div className="flex items-center gap-3 ml-6">
+              <span className="text-rose-100 text-sm">{user.email}</span>
+              <button
+                className="px-3 py-1 rounded bg-rose-800 hover:bg-rose-900 text-white text-sm"
+                onClick={async () => { await auth.signOut(); }}
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          )}
         </nav>
       </header>
       <main className="flex-1 p-6 flex flex-col items-center">
