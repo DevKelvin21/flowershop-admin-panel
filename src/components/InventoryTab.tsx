@@ -264,13 +264,16 @@ function InventoryTab() {
                 onChange={e => setNewItem({ ...newItem, quantity: e.target.value })}
                 required
               />
-              <input
+              <select
                 className="border border-rose-200 rounded px-3 py-2"
-                placeholder="Calidad"
                 value={newItem.quality}
                 onChange={e => setNewItem({ ...newItem, quality: e.target.value })}
                 required
-              />
+              >
+                <option value="">Selecciona calidad</option>
+                <option value="special">Especial</option>
+                <option value="regular">Regular</option>
+              </select>
               <div className="flex justify-end gap-2 mt-2">
                 <button
                   type="button"
