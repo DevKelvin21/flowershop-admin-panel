@@ -193,6 +193,7 @@ function LossInventory() {
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
       />
+      {loading && <div className="text-gray-500 mt-4">Cargando...</div>}
       {error && <div className="text-red-600 mt-4">{error}</div>}
     </div>
   );
