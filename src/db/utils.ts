@@ -10,6 +10,14 @@ export type InventoryItem = {
     lastUpdated?: string;
 };
 
+export type InventoryLoss = {
+    id?: string;
+    item: string;
+    quality: string;
+    quantity: number;
+    timestamp: string;
+};
+
 export async function getInventory(): Promise<InventoryItem[]> {
     const inventoryCollection = collection(db, "inventory");
     const snapshot = await getDocs(inventoryCollection);
@@ -63,4 +71,41 @@ export async function removeInventoryItem(item: InventoryItem): Promise<void> {
     const docId = item.id ?? `${item.item}_${item.quality}`;
     const itemRef = doc(db, "inventory", docId);
     await deleteDoc(itemRef);
+}
+
+export async function getInventoryLoss(): Promise<InventoryLoss[]> {
+    const lossCollection = collection(db, "inventory_loss");
+    const snapshot = await getDocs(lossCollection);
+    return snapshot.docs.map(docSnap => {
+        const data = docSnap.data() as InventoryLoss;
+        return { id: docSnap.id, ...data };
+    });
+}
+
+export async function addInventoryLoss(loss: InventoryLoss): Promise<void> {
+    // Decrement inventory
+    const invDocId = `${loss.item}_${loss.quality}`;
+    const invRef = doc(db, "inventory", invDocId);
+    // Get current inventory
+    const invSnap = await getDocs(collection(db, "inventory"));
+    const invItem = invSnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem)).find(i => i.item === loss.item && i.quality === loss.quality);
+    if (!invItem || invItem.quantity < loss.quantity) throw new Error('No hay suficiente inventario para registrar la pérdida.');
+    await updateInventoryItem({ ...invItem, quantity: invItem.quantity - loss.quantity });
+    // Add loss doc
+    const lossRef = doc(db, "inventory_loss", `${loss.item}_${loss.quality}_${Date.now()}`);
+    await setDoc(lossRef, loss);
+}
+
+export async function removeInventoryLoss(loss: InventoryLoss): Promise<void> {
+    // Restore inventory
+    const invDocId = `${loss.item}_${loss.quality}`;
+    const invRef = doc(db, "inventory", invDocId);
+    // Get current inventory
+    const invSnap = await getDocs(collection(db, "inventory"));
+    const invItem = invSnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem)).find(i => i.item === loss.item && i.quality === loss.quality);
+    if (!invItem) throw new Error('No se encontró el artículo en inventario.');
+    await updateInventoryItem({ ...invItem, quantity: invItem.quantity + loss.quantity });
+    // Remove loss doc
+    const lossRef = doc(db, "inventory_loss", loss.id!);
+    await deleteDoc(lossRef);
 }

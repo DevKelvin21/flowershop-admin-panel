@@ -4,6 +4,7 @@ import { auth } from './db/firestore';
 import './App.css';
 import DashboardTab from './components/DashboardTab.tsx';
 import InventoryTab from './components/InventoryTab.tsx';
+import LossInventory from './components/LossInventory.tsx';
 // import TransactionsTab from './components/TransactionsTab.tsx';
 import Login from './components/Login.tsx';
 import type { User } from 'firebase/auth';
@@ -45,12 +46,7 @@ function App() {
         <section className="w-full max-w-8xl bg-white rounded shadow p-6 border border-rose-100">
           {tab === 0 && <DashboardTab />}
           {tab === 1 && <InventoryTab />}
-          {tab === 2 && (
-            <div className="flex flex-col items-center">
-              <h2 className="text-xl font-semibold mb-4 text-rose-700">Pérdida</h2>
-              <p className="text-gray-700">Aquí puedes ver la información sobre pérdidas.</p>
-            </div>
-          )}
+          {tab === 2 && <LossInventory />}
           {/* {tab === 3 && <TransactionsTab />} */}
         </section>
       </main>
