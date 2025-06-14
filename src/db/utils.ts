@@ -83,9 +83,7 @@ export async function getInventoryLoss(): Promise<InventoryLoss[]> {
 }
 
 export async function addInventoryLoss(loss: InventoryLoss): Promise<void> {
-    // Decrement inventory
-    const invDocId = `${loss.item}_${loss.quality}`;
-    const invRef = doc(db, "inventory", invDocId);
+
     // Get current inventory
     const invSnap = await getDocs(collection(db, "inventory"));
     const invItem = invSnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem)).find(i => i.item === loss.item && i.quality === loss.quality);
@@ -97,9 +95,6 @@ export async function addInventoryLoss(loss: InventoryLoss): Promise<void> {
 }
 
 export async function removeInventoryLoss(loss: InventoryLoss): Promise<void> {
-    // Restore inventory
-    const invDocId = `${loss.item}_${loss.quality}`;
-    const invRef = doc(db, "inventory", invDocId);
     // Get current inventory
     const invSnap = await getDocs(collection(db, "inventory"));
     const invItem = invSnap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem)).find(i => i.item === loss.item && i.quality === loss.quality);
