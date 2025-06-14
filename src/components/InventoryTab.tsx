@@ -72,7 +72,7 @@ function EditableTable({ data, columns, onChange, onDelete }: {
   )
 }
 
-function InventoryTab() {
+function InventoryTab({ userEmail }: { userEmail: string }) {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -192,7 +192,7 @@ function InventoryTab() {
           if (modalType === 'delete') {
             if (selectedItem && selectedItem.item) {
               try {
-                await removeInventoryItem(selectedItem);
+                await removeInventoryItem(selectedItem, userEmail);
                 setInventory(inv => inv.filter(item => item.id !== selectedItem.id));
               } catch (err) {
                 setError('Error eliminando el artículo.');
@@ -207,7 +207,7 @@ function InventoryTab() {
                 ...originalItem,
                 [pendingEdit.colKey]: pendingEdit.value,
               };
-              await updateInventoryItem(updatedItem);
+              await updateInventoryItem(updatedItem, userEmail);
               setInventory(inv =>
                 inv.map((row, idx) =>
                   idx === originalIdx ? updatedItem : row
@@ -238,7 +238,7 @@ function InventoryTab() {
                     quantity: Number(newItem.quantity),
                     quality: newItem.quality,
                     lastUpdated: new Date().toISOString(),
-                  });
+                  }, userEmail);
                   setAddModalOpen(false);
                   setNewItem({ item: '', quantity: '', quality: '', lastUpdated: '' });
                   setRefreshKey(k => k + 1); // trigger inventory refresh

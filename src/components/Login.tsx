@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { auth } from '../db/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
+import { logOperation } from '../db/utils';
 
 function Login() {
   const [user, setUser] = useState<User | null>(null);
@@ -20,6 +21,11 @@ function Login() {
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      await logOperation({
+        operation_type: 'login',
+        user_name: email,
+        message: `Usuario inició sesión: ${email}`
+      });
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión.');
     }
@@ -30,6 +36,11 @@ function Login() {
     setError(null);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
+      await logOperation({
+        operation_type: 'register',
+        user_name: email,
+        message: `Usuario registrado: ${email}`
+      });
     } catch (error: any) {
       setError(error.message || 'Error al registrar usuario.');
     }
@@ -37,6 +48,13 @@ function Login() {
 
   const handleLogout = async () => {
     try {
+      if (user?.email) {
+        await logOperation({
+          operation_type: 'logout',
+          user_name: user.email,
+          message: `Usuario cerró sesión: ${user.email}`
+        });
+      }
       await signOut(auth);
     } catch (error) {
       setError('Error al cerrar sesión.');

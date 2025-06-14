@@ -5,6 +5,7 @@ import './App.css';
 import DashboardTab from './components/DashboardTab.tsx';
 import InventoryTab from './components/InventoryTab.tsx';
 import LossInventory from './components/LossInventory.tsx';
+import { logOperation } from './db/utils.ts';
 // import TransactionsTab from './components/TransactionsTab.tsx';
 import Login from './components/Login.tsx';
 import type { User } from 'firebase/auth';
@@ -46,7 +47,14 @@ function App() {
               <span className="text-rose-100 text-sm">{user.email}</span>
               <button
                 className="px-3 py-1 rounded bg-rose-800 hover:bg-rose-900 text-white text-sm"
-                onClick={async () => { await auth.signOut(); }}
+                onClick={async () => { 
+                  await logOperation({
+                    operation_type: 'logout',
+                    user_name: user.email || '',
+                    message: `Usuario cerró sesión: ${user.email || ''}`
+                  });
+                  await auth.signOut();
+                }}
               >
                 Cerrar sesión
               </button>
@@ -57,8 +65,8 @@ function App() {
       <main className="flex-1 p-6 flex flex-col items-center">
         <section className="w-full max-w-8xl bg-white rounded shadow p-6 border border-rose-100">
           {tab === 0 && <DashboardTab />}
-          {tab === 1 && <InventoryTab />}
-          {tab === 2 && <LossInventory />}
+          {tab === 1 && user && <InventoryTab userEmail={user.email || ''} />}
+          {tab === 2 && user && <LossInventory userEmail={user.email || ''} />}
           {/* {tab === 3 && <TransactionsTab />} */}
         </section>
       </main>

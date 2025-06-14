@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { getInventoryLoss, addInventoryLoss, removeInventoryLoss, getInventory, type InventoryLoss, type InventoryItem } from '../db/utils';
 import ConfirmModal from './ConfirmModal';
 
-function LossInventory() {
+function LossInventory({ userEmail }: { userEmail: string }) {
   const [losses, setLosses] = useState<InventoryLoss[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +100,7 @@ function LossInventory() {
                     quality: newLoss.quality,
                     quantity: Number(newLoss.quantity),
                     timestamp: new Date().toISOString(),
-                  });
+                  }, userEmail);
                   setAddModalOpen(false);
                   setNewLoss({ item: '', quality: '', quantity: '', timestamp: '' });
                   setLoading(true);
@@ -175,7 +175,7 @@ function LossInventory() {
         onConfirm={async () => {
           if (selectedLoss) {
             try {
-              await removeInventoryLoss(selectedLoss);
+              await removeInventoryLoss(selectedLoss, userEmail);
               setConfirmOpen(false);
               setSelectedLoss(null);
               setLoading(true);
