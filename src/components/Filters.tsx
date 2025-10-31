@@ -1,5 +1,10 @@
 import React from 'react';
 
+type DateRangeValue = {
+    from?: string;
+    to?: string;
+};
+
 type SelectOption<V extends string = string> = {
     value: V;
     label: string;
@@ -18,6 +23,7 @@ export function Filters({
     className,
     search,
     selects,
+    dateRange,
 }: {
     className?: string;
     search?: {
@@ -27,6 +33,14 @@ export function Filters({
         inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     };
     selects?: SelectConfig<string>[];
+    dateRange?: {
+        value: DateRangeValue;
+        onChange: (next: DateRangeValue) => void;
+        fromPlaceholder?: string;
+        toPlaceholder?: string;
+        fromInputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+        toInputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+    };
 }) {
     return (
         <div className={"flex gap-2 mb-4" + (className ? ` ${className}` : '')}>
@@ -56,6 +70,39 @@ export function Filters({
                     ))}
                 </select>
             ))}
+            {dateRange && (
+                <div className="flex items-center gap-2">
+                    <input
+                        type="date"
+                        className="px-3 py-2 border border-rose-200 rounded focus:ring-2 focus:ring-rose-400"
+                        placeholder={dateRange.fromPlaceholder ?? 'From'}
+                        value={dateRange.value.from ?? ''}
+                        max={dateRange.value.to || undefined}
+                        onChange={e =>
+                            dateRange.onChange({
+                                ...dateRange.value,
+                                from: e.target.value || undefined,
+                            })
+                        }
+                        {...(dateRange.fromInputProps ?? {})}
+                    />
+                    <span className="text-rose-400">—</span>
+                    <input
+                        type="date"
+                        className="px-3 py-2 border border-rose-200 rounded focus:ring-2 focus:ring-rose-400"
+                        placeholder={dateRange.toPlaceholder ?? 'To'}
+                        value={dateRange.value.to ?? ''}
+                        min={dateRange.value.from || undefined}
+                        onChange={e =>
+                            dateRange.onChange({
+                                ...dateRange.value,
+                                to: e.target.value || undefined,
+                            })
+                        }
+                        {...(dateRange.toInputProps ?? {})}
+                    />
+                </div>
+            )}
         </div>
     )
 }
