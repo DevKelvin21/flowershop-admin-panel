@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getInventoryLoss, addInventoryLoss, removeInventoryLoss, getInventory, type InventoryLoss, type InventoryItem } from '../db/utils';
-import ConfirmModal from './ConfirmModal';
+import { ConfirmModal } from './modals/ConfirmModal';
 
 function LossInventory({ userEmail }: { userEmail: string }) {
   const [losses, setLosses] = useState<InventoryLoss[]>([]);

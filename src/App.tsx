@@ -3,7 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './db/firestore';
 import './App.css';
 import DashboardTab from './components/DashboardTab.tsx';
-import InventoryTab from './components/InventoryTab.tsx';
+import { InventoryManagement } from './pages/InventoryManagement.tsx';
 import LossInventory from './components/LossInventory.tsx';
 import { logOperation } from './db/utils.ts';
 // import TransactionsTab from './components/TransactionsTab.tsx';
@@ -31,11 +31,10 @@ function App() {
           {['Reporte', 'Inventario', 'Pérdida'].map((label, idx) => (
             <button
               key={label}
-              className={`px-4 py-2 rounded font-medium transition ${
-                tab === idx
-                  ? 'bg-rose-500 text-white shadow'
-                  : 'bg-rose-100 text-rose-700 hover:bg-rose-200 hover:text-rose-900'
-              }`}
+              className={`px-4 py-2 rounded font-medium transition ${tab === idx
+                ? 'bg-rose-500 text-white shadow'
+                : 'bg-rose-100 text-rose-700 hover:bg-rose-200 hover:text-rose-900'
+                }`}
               onClick={() => setTab(idx)}
             >
               {label}
@@ -47,7 +46,7 @@ function App() {
               <span className="text-rose-100 text-sm">{user.email}</span>
               <button
                 className="px-3 py-1 rounded bg-rose-800 hover:bg-rose-900 text-white text-sm"
-                onClick={async () => { 
+                onClick={async () => {
                   await logOperation({
                     operation_type: 'logout',
                     user_name: user.email || '',
@@ -65,7 +64,7 @@ function App() {
       <main className="flex-1 p-6 flex flex-col items-center">
         <section className="w-full max-w-8xl bg-white rounded shadow p-6 border border-rose-100">
           {tab === 0 && <DashboardTab />}
-          {tab === 1 && user && <InventoryTab userEmail={user.email || ''} />}
+          {tab === 1 && user && <InventoryManagement userEmail={user.email || ''} />}
           {tab === 2 && user && <LossInventory userEmail={user.email || ''} />}
           {/* {tab === 3 && <TransactionsTab />} */}
         </section>

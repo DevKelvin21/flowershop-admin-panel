@@ -19,7 +19,7 @@ const fieldLabels: Record<string, string> = {
   lastUpdated: 'Última Actualización',
 };
 
-const ConfirmModal: React.FC<ConfirmModalProps> = ({
+export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   open,
   title,
   message,
@@ -75,5 +75,3 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     </div>
   );
 };
-
-export default ConfirmModal;

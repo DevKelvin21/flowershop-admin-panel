@@ -1,22 +1,7 @@
 import { db } from "./firestore";
 import { collection, getDocs, doc, writeBatch, deleteDoc, setDoc, query, where } from "firebase/firestore";
+import type { InventoryItem, InventoryLoss } from "../shared/models/inventory";
 
-
-export type InventoryItem = {
-    id?: string;
-    item: string;
-    quantity: number;
-    quality: string;
-    lastUpdated?: string;
-};
-
-export type InventoryLoss = {
-    id?: string;
-    item: string;
-    quality: string;
-    quantity: number;
-    timestamp: string;
-};
 
 export async function getInventory(): Promise<InventoryItem[]> {
     const inventoryCollection = collection(db, "inventory");
