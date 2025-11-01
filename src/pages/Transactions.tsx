@@ -4,7 +4,7 @@ const transactionsMock = [
   { transaction_id: 'TXN003', item: 'Gift Baskets', total_sale_price: 90, message_sent: 'Yes' },
 ]
 
-function TransactionsTab() {
+export function TransactionsPage() {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4 text-rose-700">Transacciones por Revisar</h2>
@@ -31,5 +31,3 @@ function TransactionsTab() {
     </div>
   )
 }
-
-export default TransactionsTab

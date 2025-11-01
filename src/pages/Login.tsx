@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, on
 import type { User } from 'firebase/auth';
 import { logOperation } from '../db/utils';
 
-function Login() {
+export function LoginPage() {
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -110,5 +110,3 @@ function Login() {
     </div>
   );
 }
-
-export default Login;
