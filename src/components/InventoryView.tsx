@@ -1,6 +1,6 @@
 import type { InventoryItem } from '../shared/models/inventory'
 import { EditableTable } from './EditableTable'
-import { ConfirmModal } from './modals/ConfirmModal'
+import { ConfirmActionModal } from './modals/ConfirmActionModal'
 import { Filters } from './Filters'
 import { AddInventoryModal } from './modals/AddInventoryModal'
 import { ErrorMessage } from './ErrorMessage'
@@ -97,7 +97,7 @@ export function InventoryView({
         onChange={table.handleEditableTableChange}
         onDelete={table.handleEditableTableDelete}
       />
-      <ConfirmModal
+      <ConfirmActionModal
         open={modals.isConfirmModalOpen}
         title={modals.confirmModalType === 'delete' ? 'Confirmar eliminación' : 'Confirmar edición'}
         message={modals.confirmModalType === 'delete' ? '¿Estás seguro de que deseas eliminar este artículo del inventario?' : '¿Estás seguro de que deseas editar este artículo?'}
