@@ -4,7 +4,7 @@ import { auth } from './db/firestore';
 import './App.css';
 import DashboardTab from './components/DashboardTab.tsx';
 import { InventoryManagement } from './pages/InventoryManagement.tsx';
-import LossInventory from './components/LossInventory.tsx';
+import { LossInventoryManagement } from './pages/LossInventoryManagement.tsx';
 import { logOperation } from './db/utils.ts';
 // import TransactionsTab from './components/TransactionsTab.tsx';
 import Login from './components/Login.tsx';
@@ -65,7 +65,7 @@ function App() {
         <section className="w-full max-w-8xl bg-white rounded shadow p-6 border border-rose-100">
           {tab === 0 && <DashboardTab />}
           {tab === 1 && user && <InventoryManagement userEmail={user.email || ''} />}
-          {tab === 2 && user && <LossInventory userEmail={user.email || ''} />}
+          {tab === 2 && user && <LossInventoryManagement userEmail={user.email || ''} />}
           {/* {tab === 3 && <TransactionsTab />} */}
         </section>
       </main>
