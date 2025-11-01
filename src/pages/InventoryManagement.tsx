@@ -7,10 +7,14 @@ import { useInventoryFilters } from '../hooks/useInventoryFilters'
 import { useInventoryCommands } from '../hooks/useInventoryCommands'
 
 export function InventoryManagement({ userEmail }: { userEmail: string }) {
-    // Inventory data and state
+    /**
+     * Data loading: inventory dataset with loading/error state and refresh.
+     */
     const { inventory, loading, error, refreshInventory } = useInventory();
 
-    // Filters
+    /**
+     * Filters: search and quality filter with derived filtered inventory.
+     */
     const {
         search,
         filter,
@@ -20,16 +24,22 @@ export function InventoryManagement({ userEmail }: { userEmail: string }) {
         inventoryQualityTypes
     } = useInventoryFilters(inventory);
 
-    // Modals
+    /**
+     * Modals: confirm and add inventory dialogs.
+     */
     const confirmModal = useModal();
     const addModal = useModal();
 
-    // UI/state for modals
+    /**
+     * UI state: confirm modal state and selected/pending items.
+     */
     const [confirmModalType, setConfirmModalType] = useState<'delete' | 'edit' | null>(null);
     const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
     const [pendingEdit, setPendingEdit] = useState<{ rowIdx: number, colKey: string, value: string } | null>(null);
 
-    // Inventory CRUD operations
+    /**
+     * Commands: inventory CRUD actions bound with refresh.
+     */
     const { add, update, remove } = useInventoryCommands(userEmail, refreshInventory);
 
     const handleCancelConfirmModal = () => {
