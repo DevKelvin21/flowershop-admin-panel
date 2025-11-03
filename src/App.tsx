@@ -1,28 +1,21 @@
-import { useEffect, useState } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from './db/firestore';
+import { useState } from 'react';
 import './App.css';
+import { LoadingSpinner } from './components/LoadingSpinner.tsx';
+import { Navbar } from './components/Navbar.tsx';
+import { useAuth } from './hooks/useAuth.ts';
 import { DashboardPage } from './pages/Dashboard.tsx';
 import { InventoryManagement } from './pages/InventoryManagement.tsx';
-import { LossInventoryManagement } from './pages/LossInventoryManagement.tsx';
-import { logOperation } from './db/utils.ts';
-import { TransactionsPage } from './pages/Transactions.tsx';
 import { LoginPage } from './pages/Login.tsx';
-import type { User } from 'firebase/auth';
-import { Navbar } from './components/Navbar.tsx';
+import { LossInventoryManagement } from './pages/LossInventoryManagement.tsx';
+import { TransactionsPage } from './pages/Transactions.tsx';
+import { authService } from './services/index.ts';
 
 function App() {
   const [tab, setTab] = useState(0);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, loading, handleLogout } = useAuth(authService);
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, setUser);
-    return () => unsub();
-  }, []);
-
-  if (!user) {
-    return <LoginPage />;
-  }
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <LoginPage />;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -32,14 +25,7 @@ function App() {
           currentTab={tab}
           onSelectTab={setTab}
           userEmail={user.email}
-          onLogout={async () => {
-            await logOperation({
-              operation_type: 'logout',
-              user_name: user.email || '',
-              message: `Usuario cerró sesión: ${user.email || ''}`
-            });
-            await auth.signOut();
-          }}
+          onLogout={handleLogout}
         />
       </header>
       <main className="flex-1 p-6 flex flex-col items-center">
