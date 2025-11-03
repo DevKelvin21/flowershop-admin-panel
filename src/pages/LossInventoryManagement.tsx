@@ -1,12 +1,17 @@
 import { useMemo, useState } from 'react';
 import { LossInventoryView } from '../components/LossInventoryView';
+import { useAuth } from '../hooks/useAuth';
 import { useInventory } from '../hooks/useInventory';
 import { useInventoryCommands } from '../hooks/useInventoryCommands';
 import { useLossFilters } from '../hooks/useLossFilters';
 import { useModal } from '../hooks/useModal';
+import { authService } from '../services/index';
 import type { InventoryLoss } from '../shared/models/inventory';
 
-export function LossInventoryManagement({ userEmail }: { userEmail: string }) {
+
+export function LossInventoryManagement() {
+    const { user } = useAuth(authService);
+    const userEmail = user?.email || '';
     /**
      * Data loading: fetch inventory and losses with loading/error state.
      */
