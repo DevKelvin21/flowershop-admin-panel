@@ -9,7 +9,7 @@ const navItems = [
     { path: '/', label: 'Reporte' },
     { path: '/inventory', label: 'Inventario' },
     { path: '/losses', label: 'Pérdida' },
-    { path: '/transactions', label: 'Transacciones' },
+    { path: '/financial', label: 'Ventas y Gastos' },
 ];
 
 export function Navbar({ userEmail, onLogout }: NavbarProps) {

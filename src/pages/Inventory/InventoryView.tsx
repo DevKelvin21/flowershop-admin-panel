@@ -1,10 +1,10 @@
-import type { InventoryItem } from '../shared/models/inventory'
-import { EditableTable } from './EditableTable'
-import { ConfirmActionModal } from './modals/ConfirmActionModal'
-import { Filters } from './Filters'
-import { AddInventoryModal } from './modals/AddInventoryModal'
-import { ErrorMessage } from './ErrorMessage'
-import { LoadingSpinner } from './LoadingSpinner'
+import type { InventoryItem } from '../../shared/models/inventory'
+import { EditableTable } from '../../components/EditableTable'
+import { ConfirmActionModal } from '../../components/modals/ConfirmActionModal'
+import { Filters } from '../../components/Filters'
+import { AddInventoryModal } from '../../components/modals/AddInventoryModal'
+import { ErrorMessage } from '../../components/ErrorMessage'
+import { LoadingSpinner } from '../../components/LoadingSpinner'
 
 interface InventoryViewProps {
 
