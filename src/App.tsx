@@ -12,10 +12,14 @@ import { authService } from './services/index.ts';
 
 function App() {
   const [tab, setTab] = useState(0);
-  const { user, loading, handleLogout } = useAuth(authService);
+  const { user, loading, signOut } = useAuth(authService);
 
   if (loading) return <LoadingSpinner />;
   if (!user) return <LoginPage />;
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import type { AuthService } from '../auth/auth.service';
 import type { AuthUser } from '../shared/models/auth';
 
+/**
+ * Hook for managing authentication state and operations
+ * Focused solely on authentication concerns, not form UI
+ */
 export function useAuth(authService: AuthService) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -21,69 +21,55 @@ export function useAuth(authService: AuthService) {
     return () => unsubscribe();
   }, [authService]);
 
-  const handleLogin = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const signIn = useCallback(async (email: string, password: string) => {
     setError(null);
-    
     try {
       const authUser = await authService.signIn(email, password);
       setUser(authUser);
+      return authUser;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión.';
       setError(errorMessage);
+      throw err;
     }
-  }, [authService, email, password]);
+  }, [authService]);
 
-  const handleRegister = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  const signUp = useCallback(async (email: string, password: string) => {
     setError(null);
-    
     try {
       const authUser = await authService.signUp(email, password);
       setUser(authUser);
+      return authUser;
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error al registrar usuario.';
       setError(errorMessage);
+      throw err;
     }
-  }, [authService, email, password]);
+  }, [authService]);
 
-  const handleLogout = useCallback(async () => {
+  const signOut = useCallback(async () => {
     setError(null);
-    
     try {
       await authService.signOut();
       setUser(null);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cerrar sesión.';
       setError(errorMessage);
+      throw err;
     }
   }, [authService]);
-
-  const toggleRegisterMode = useCallback(() => {
-    setIsRegister(prev => !prev);
-    setError(null);
-  }, []);
 
   return {
     // State
     user,
     loading,
     error,
-    email,
-    password,
-    isRegister,
-    
-    // Setters
-    setEmail,
-    setPassword,
-    setIsRegister,
-    
-    // Handlers
-    handleLogin,
-    handleRegister,
-    handleLogout,
-    toggleRegisterMode,
-    
+
+    // Actions
+    signIn,
+    signUp,
+    signOut,
+
     // Utility
     clearError: () => setError(null),
   };
