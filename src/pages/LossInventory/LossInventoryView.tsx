@@ -1,9 +1,9 @@
-import type { InventoryLoss } from '../shared/models/inventory';
-import { ErrorMessage } from './ErrorMessage';
-import { Filters } from './Filters';
-import { LoadingSpinner } from './LoadingSpinner';
-import { AddInventoryLossModal } from './modals/AddInventoryLossModal';
-import { ConfirmActionModal } from './modals/ConfirmActionModal';
+import type { InventoryLoss } from '../../shared/models/inventory';
+import { ErrorMessage } from '../../components/ErrorMessage';
+import { Filters } from '../../components/Filters';
+import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { AddInventoryLossModal } from '../../components/modals/AddInventoryLossModal';
+import { ConfirmActionModal } from '../../components/modals/ConfirmActionModal';
 
 interface LossInventoryViewProps {
 

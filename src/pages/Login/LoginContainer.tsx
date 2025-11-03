@@ -1,16 +1,16 @@
 import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LoginView } from '../components/LoginView';
-import { useAuth } from '../hooks/useAuth';
-import { useLoginForm } from '../hooks/useLoginForm';
-import { authService } from '../services';
+import { LoginView } from './LoginView';
+import { useAuth } from '../../hooks/useAuth';
+import { useLoginForm } from '../../hooks/useLoginForm';
+import { authService } from '../../services';
 
 /**
  * Container component for Login page
  * Separates authentication logic from presentation
  * After successful login, redirects to dashboard using React Router's navigate
  */
-export function LoginPage() {
+export function LoginContainer() {
   /**
    * Authentication logic: sign in and sign up
    * Error handling and loading state are managed by the useAuth hook

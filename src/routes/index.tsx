@@ -1,16 +1,12 @@
-import { Routes, Route } from 'react-router-dom';
-import { DashboardPage } from '../pages/Dashboard';
-import { InventoryManagement } from '../pages/InventoryManagement';
-import { LossInventoryManagement } from '../pages/LossInventoryManagement';
-import { TransactionsPage } from '../pages/Transactions';
-import { LoginPage } from '../pages/Login';
+import { Route, Routes } from 'react-router-dom';
+import { DashboardContainer, InventoryContainer, LoginContainer, LossInventoryContainer, FinancialContainer } from '../pages';
 import { Layout } from './Layout';
 import { ProtectedRoute } from './ProtectedRoute';
 
 export function AppRoutes() {
     return (
         <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/login" element={<LoginContainer />} />
 
             <Route
                 path="/"
@@ -20,13 +16,13 @@ export function AppRoutes() {
                     </ProtectedRoute>
                 }
             >
-                <Route index element={<DashboardPage />} />
-                <Route path="inventory" element={<InventoryManagement />} />
-                <Route path="losses" element={<LossInventoryManagement />} />
-                <Route path="transactions" element={<TransactionsPage />} />
+                <Route index element={<DashboardContainer />} />
+                <Route path="inventory" element={<InventoryContainer />} />
+                <Route path="losses" element={<LossInventoryContainer />} />
+                <Route path="financial" element={<FinancialContainer />} />
             </Route>
 
-            <Route path="*" element={<LoginPage />} />
+            <Route path="*" element={<LoginContainer />} />
         </Routes>
     );
 }

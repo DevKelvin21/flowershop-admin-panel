@@ -1,5 +1,5 @@
-import { ErrorMessage } from './ErrorMessage';
-import { LoadingSpinner } from './LoadingSpinner';
+import { ErrorMessage } from '../../components/ErrorMessage';
+import { LoadingSpinner } from '../../components/LoadingSpinner';
 
 interface LoginViewProps {
     onLogin: (e: React.FormEvent) => void;

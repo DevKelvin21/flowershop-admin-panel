@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import { InventoryView } from '../components/InventoryView'
-import { useAuth } from '../hooks/useAuth'
-import { useInventory } from '../hooks/useInventory'
-import { useInventoryCommands } from '../hooks/useInventoryCommands'
-import { useInventoryFilters } from '../hooks/useInventoryFilters'
-import { useModal } from '../hooks/useModal'
-import { authService } from '../services/index'
-import type { InventoryItem } from '../shared/models/inventory'
+import { InventoryView } from './InventoryView'
+import { useAuth } from '../../hooks/useAuth'
+import { useInventory } from '../../hooks/useInventory'
+import { useInventoryCommands } from '../../hooks/useInventoryCommands'
+import { useInventoryFilters } from '../../hooks/useInventoryFilters'
+import { useModal } from '../../hooks/useModal'
+import { authService } from '../../services/index'
+import type { InventoryItem } from '../../shared/models/inventory'
 
 
-export function InventoryManagement() {
+export function InventoryContainer() {
     const { user } = useAuth(authService);
     const userEmail = user?.email || '';
     /**
