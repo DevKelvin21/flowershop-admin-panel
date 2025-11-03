@@ -1,27 +1,33 @@
+import { NavLink } from 'react-router-dom';
 
 type NavbarProps = {
-    currentTab: number;
-    onSelectTab: (index: number) => void;
     userEmail?: string | null;
     onLogout?: () => Promise<void> | void;
 };
 
-export function Navbar({ currentTab, onSelectTab, userEmail, onLogout }: NavbarProps) {
-    const labels = ['Reporte', 'Inventario', 'Pérdida', 'Transacciones'];
+const navItems = [
+    { path: '/', label: 'Reporte' },
+    { path: '/inventory', label: 'Inventario' },
+    { path: '/losses', label: 'Pérdida' },
+    { path: '/financial', label: 'Ventas y Gastos' },
+];
 
+export function Navbar({ userEmail, onLogout }: NavbarProps) {
     return (
         <nav className="flex space-x-2 pb-4 md:pb-0 items-center">
-            {labels.map((label, idx) => (
-                <button
-                    key={label}
-                    className={`px-4 py-2 rounded font-medium transition ${currentTab === idx
-                        ? 'bg-rose-500 text-white shadow'
-                        : 'bg-rose-100 text-rose-700 hover:bg-rose-200 hover:text-rose-900'
-                        }`}
-                    onClick={() => onSelectTab(idx)}
+            {navItems.map(({ path, label }) => (
+                <NavLink
+                    key={path}
+                    to={path}
+                    className={({ isActive }) =>
+                        `px-4 py-2 rounded font-medium transition ${isActive
+                            ? 'bg-rose-500 text-white shadow'
+                            : 'bg-rose-100 text-rose-700 hover:bg-rose-200 hover:text-rose-900'
+                        }`
+                    }
                 >
                     {label}
-                </button>
+                </NavLink>
             ))}
             {userEmail && (
                 <div className="flex items-center gap-3 ml-6">
@@ -39,4 +45,3 @@ export function Navbar({ currentTab, onSelectTab, userEmail, onLogout }: NavbarP
         </nav>
     );
 }
-
