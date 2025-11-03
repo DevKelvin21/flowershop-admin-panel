@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface ConfirmModalProps {
+interface ConfirmActionModalProps {
   open: boolean;
   title: string;
   message: string;
@@ -19,7 +19,7 @@ const fieldLabels: Record<string, string> = {
   lastUpdated: 'Última Actualización',
 };
 
-const ConfirmModal: React.FC<ConfirmModalProps> = ({
+export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
   open,
   title,
   message,
@@ -75,5 +75,3 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     </div>
   );
 };
-
-export default ConfirmModal;
