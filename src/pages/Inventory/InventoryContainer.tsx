@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { InventoryView } from './InventoryView'
 import { useAuth } from '../../hooks/useAuth'
 import { useInventory } from '../../hooks/useInventory'
 import { useInventoryCommands } from '../../hooks/useInventoryCommands'
 import { useInventoryFilters } from '../../hooks/useInventoryFilters'
 import { useModal } from '../../hooks/useModal'
-import { authService } from '../../services/index'
+import { authService, inventoryService } from '../../services'
 import type { InventoryItem } from '../../shared/models/inventory'
+import { InventoryView } from './InventoryView'
 
 
 export function InventoryContainer() {
@@ -15,7 +15,7 @@ export function InventoryContainer() {
     /**
      * Data loading: inventory dataset with loading/error state and refresh.
      */
-    const { inventory, loading, error, refreshInventory } = useInventory();
+    const { inventory, loading, error, refreshInventory } = useInventory(inventoryService);
 
     /**
      * Filters: search and quality filter with derived filtered inventory.
@@ -45,7 +45,7 @@ export function InventoryContainer() {
     /**
      * Commands: inventory CRUD actions bound with refresh.
      */
-    const { add, update, remove } = useInventoryCommands(userEmail, refreshInventory);
+    const { add, update, remove } = useInventoryCommands(inventoryService, userEmail, refreshInventory);
 
     const handleCancelConfirmModal = () => {
         confirmModal.close();
