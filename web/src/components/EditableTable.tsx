@@ -2,12 +2,19 @@ import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
 
-export function EditableTable<T extends Record<string, unknown>>({ data, columns, onChange, onDelete }: {
-    data: T[],
-    columns: { key: Extract<keyof T, string>, label: string }[],
-    onChange: (rowIdx: number, colKey: Extract<keyof T, string>, value: string) => void,
-    onDelete: (rowIdx: number) => void
-}) {
+interface EditableTableProps<T extends Record<string, unknown>> {
+    data: T[];
+    columns: { key: Extract<keyof T, string>, label: string }[];
+    onChange: (rowIdx: number, colKey: Extract<keyof T, string>, value: string) => void;
+    onDelete: (rowIdx: number) => void;
+}
+
+export function EditableTable<T extends Record<string, unknown>>({ 
+    data, 
+    columns, 
+    onChange, 
+    onDelete 
+}: EditableTableProps<T>) {
     const [editing, setEditing] = useState<{ row: number, col: Extract<keyof T, string> } | null>(null)
     const [editValue, setEditValue] = useState('')
 

@@ -19,12 +19,7 @@ type SelectConfig<V extends string = string> = {
     selectProps?: React.SelectHTMLAttributes<HTMLSelectElement>;
 };
 
-export function Filters({
-    className,
-    search,
-    selects,
-    dateRange,
-}: {
+interface FiltersProps {
     className?: string;
     search?: {
         value: string;
@@ -41,7 +36,14 @@ export function Filters({
         fromInputProps?: React.InputHTMLAttributes<HTMLInputElement>;
         toInputProps?: React.InputHTMLAttributes<HTMLInputElement>;
     };
-}) {
+}
+
+export function Filters({
+    className,
+    search,
+    selects,
+    dateRange,
+}: FiltersProps) {
     return (
         <div className={"flex gap-2 mb-4" + (className ? ` ${className}` : '')}>
             {search && (

@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom';
 
-type NavbarProps = {
-    userEmail?: string | null;
-    onLogout?: () => Promise<void> | void;
-};
+interface NavbarProps {
+    userEmail: string | null;
+    onLogout: () => Promise<void> | void;
+}
 
 const navItems = [
     { path: '/', label: 'Reporte' },

@@ -3,9 +3,9 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../hooks/useAuth';
 import { authService } from '../services/index';
 
-type ProtectedRouteProps = {
+interface ProtectedRouteProps {
     children: React.ReactNode;
-};
+}
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
     const { user, loading } = useAuth(authService);
