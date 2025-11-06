@@ -703,7 +703,7 @@ This frontend connects to:
 ### Architecture Patterns
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
 - [Service Layer Pattern](https://martinfowler.com/eaaCatalog/serviceLayer.html)
-- [Dependency Injection in React](https://kentcdodds.com/blog/dependency-injection-in-react)
+- [Dependency Injection in React](https://medium.com/@matthill8286/dependency-injection-in-react-a-good-guide-with-code-examples-4afc8adc6cdb)
 
 ---
 
