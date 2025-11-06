@@ -1,8 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { getInventory, getInventoryLoss } from "../db/utils";
+import type { InventoryService } from "../repositories/services/inventory.service";
 import type { InventoryItem, InventoryLoss } from "../shared/models/inventory";
 
-export function useInventory() {
+/**
+ * Hook for managing inventory state and operations
+ * Accepts inventoryService as parameter for better testability
+ */
+export function useInventory(inventoryService: InventoryService) {
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -12,7 +16,7 @@ export function useInventory() {
         setLoading(true);
         setError(null);
         try {
-            const data = await getInventoryLoss();
+            const data = await inventoryService.getAllLosses();
             setLosses(data);
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -20,13 +24,13 @@ export function useInventory() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [inventoryService]);
 
     const fetchInventory = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await getInventory();
+            const data = await inventoryService.getAllInventory();
             setInventory(data);
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -34,7 +38,7 @@ export function useInventory() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [inventoryService]);
 
     useEffect(() => {
         void fetchInventory();
