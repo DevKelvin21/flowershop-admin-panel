@@ -1,0 +1,7 @@
+*.vscode/
+*.vite/
+*.cursor/
+*.idea/
+*.DS_Store
+*.env*
+node_modules/
