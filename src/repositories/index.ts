@@ -1,21 +1,23 @@
-// Export interfaces
+/**
+ * Repository Module Exports
+ * 
+ * This file exports:
+ * - Interfaces (for type definitions and DI)
+ * - Implementation classes (for instantiation if needed)
+ * - Service classes (business logic layer)
+ * - Factory functions (for creating instances)
+ */
+
+// Export interfaces (types)
 export type { IInventoryRepository, ILossRepository } from './interfaces';
 
-// Export implementations
+// Export implementation classes
 export { FirebaseInventoryRepository } from './firebase/firebase-inventory.repository';
 export { FirebaseLossRepository } from './firebase/firebase-loss.repository';
 
-// Export services
+// Export service classes
 export { InventoryService } from './services/inventory.service';
 
-// Export singleton instances (to be created later when needed)
-import { FirebaseInventoryRepository } from './firebase/firebase-inventory.repository';
-import { FirebaseLossRepository } from './firebase/firebase-loss.repository';
-import { InventoryService } from './services/inventory.service';
-import { loggingService } from '../services/index';
-
-// Create singleton instances
-export const inventoryRepository = new FirebaseInventoryRepository();
-export const lossRepository = new FirebaseLossRepository();
-export const inventoryService = new InventoryService(inventoryRepository, lossRepository, loggingService);
+// Export factory functions
+export { createInventoryRepository, createLossRepository } from './factory';
 

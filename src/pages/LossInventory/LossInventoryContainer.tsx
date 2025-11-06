@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { LossInventoryView } from './LossInventoryView';
 import { useAuth } from '../../hooks/useAuth';
 import { useInventory } from '../../hooks/useInventory';
 import { useInventoryCommands } from '../../hooks/useInventoryCommands';
 import { useLossFilters } from '../../hooks/useLossFilters';
 import { useModal } from '../../hooks/useModal';
-import { authService } from '../../services/index';
+import { authService, inventoryService } from '../../services';
 import type { InventoryLoss } from '../../shared/models/inventory';
+import { LossInventoryView } from './LossInventoryView';
 
 
 export function LossInventoryContainer() {
@@ -15,12 +15,12 @@ export function LossInventoryContainer() {
     /**
      * Data loading: fetch inventory and losses with loading/error state.
      */
-    const { inventory, losses, loading, error, refreshLosses, refreshInventory } = useInventory();
+    const { inventory, losses, loading, error, refreshLosses, refreshInventory } = useInventory(inventoryService);
 
     /**
      * Commands: actions that mutate inventory/losses, wired with refresh callbacks.
      */
-    const { addLoss, removeLoss } = useInventoryCommands(userEmail, refreshLosses, refreshInventory);
+    const { addLoss, removeLoss } = useInventoryCommands(inventoryService, userEmail, refreshLosses, refreshInventory);
 
     /**
      * UI state: modal visibility and selected loss for confirmation.
