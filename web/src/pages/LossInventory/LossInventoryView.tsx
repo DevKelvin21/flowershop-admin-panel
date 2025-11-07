@@ -53,9 +53,9 @@ export function LossInventoryView({
   return (
     <div>
       <div className="flex gap-2 mb-4 justify-between items-center">
-        <h2 className="text-xl font-semibold mb-4 text-rose-700">Pérdidas de Inventario</h2>
+        <h2 className="text-xl font-semibold mb-4 text-primary">Pérdidas de Inventario</h2>
         <button
-          className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
           onClick={modals.openAddModal}
         >
           Agregar Pérdida
@@ -84,26 +84,26 @@ export function LossInventoryView({
         }}
       />
       {/**TODO: Make a table component or reuse EditableTable component */}
-      <table className="min-w-full border border-rose-100 rounded-lg overflow-hidden">
-        <thead className="bg-rose-50">
+      <table className="min-w-full border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
+        <thead className="bg-muted">
           <tr>
-            <th className="px-4 py-2 text-left font-semibold text-rose-800">Artículo</th>
-            <th className="px-4 py-2 text-left font-semibold text-rose-800">Calidad</th>
-            <th className="px-4 py-2 text-left font-semibold text-rose-800">Cantidad</th>
-            <th className="px-4 py-2 text-left font-semibold text-rose-800">Fecha</th>
-            <th className="px-4 py-2 text-left font-semibold text-rose-800">Eliminar</th>
+            <th className="px-4 py-2 text-left font-semibold text-primary">Artículo</th>
+            <th className="px-4 py-2 text-left font-semibold text-primary">Calidad</th>
+            <th className="px-4 py-2 text-left font-semibold text-primary">Cantidad</th>
+            <th className="px-4 py-2 text-left font-semibold text-primary">Fecha</th>
+            <th className="px-4 py-2 text-left font-semibold text-primary">Eliminar</th>
           </tr>
         </thead>
         <tbody>
           {filters.filteredLosses.map(loss => (
-            <tr key={loss.id} className="even:bg-rose-50">
+            <tr key={loss.id} className="even:bg-muted/50">
               <td className="px-4 py-2">{loss.item}</td>
               <td className="px-4 py-2">{loss.quality}</td>
               <td className="px-4 py-2">{loss.quantity}</td>
               <td className="px-4 py-2">{loss.timestamp.slice(0, 10)}</td>
               <td className="px-4 py-2">
                 <button
-                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-3 py-1 rounded"
                   onClick={() => { data.setSelectedLoss(loss); modals.openConfirmModal(); }}
                 >
                   Eliminar

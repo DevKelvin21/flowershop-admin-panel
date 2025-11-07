@@ -29,18 +29,18 @@ export function AddInventoryModal({ open, onCancel, onConfirm, onError }: AddInv
 
     if (!open) return null;
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-[90vw]">
-                <h3 className="text-lg font-semibold mb-4 text-rose-700">Agregar nuevo artículo</h3>
+        <div className="fixed inset-0 flex items-center justify-center bg-background/80 z-50 backdrop-blur-sm">
+            <div className="bg-card text-card-foreground rounded-lg shadow-lg p-6 min-w-[320px] max-w-[90vw]">
+                <h3 className="text-lg font-semibold mb-4 text-primary">Agregar nuevo artículo</h3>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <input
-                        className="border border-rose-200 rounded px-3 py-2"
+                        className="border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                         placeholder="Nombre de Articulo"
                         value={formData.item}
                         onChange={e => setFormData({ ...formData, item: e.target.value })}
                     />
                     <input
-                        className="border border-rose-200 rounded px-3 py-2"
+                        className="border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                         placeholder="Cantidad"
                         type="number"
                         min="0"
@@ -48,7 +48,7 @@ export function AddInventoryModal({ open, onCancel, onConfirm, onError }: AddInv
                         onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
                     />
                     <select
-                        className="border border-rose-200 rounded px-3 py-2"
+                        className="border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                         value={formData.quality}
                         onChange={e => setFormData({ ...formData, quality: e.target.value })}
                     >
@@ -59,14 +59,14 @@ export function AddInventoryModal({ open, onCancel, onConfirm, onError }: AddInv
                     <div className="flex justify-end gap-2 mt-2">
                         <button
                             type="button"
-                            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-800"
+                            className="px-4 py-2 rounded bg-muted hover:bg-muted/80 text-muted-foreground"
                             onClick={onCancel}
                         >
                             Cancelar
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 rounded bg-rose-600 hover:bg-rose-700 text-white"
+                            className="px-4 py-2 rounded bg-primary hover:bg-primary/90 text-primary-foreground"
                         >
                             Agregar
                         </button>

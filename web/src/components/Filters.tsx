@@ -49,7 +49,7 @@ export function Filters({
             {search && (
                 <input
                     type="text"
-                    className="px-3 py-2 border border-rose-200 rounded w-full focus:ring-2 focus:ring-rose-400"
+                    className="px-3 py-2 border border-border rounded bg-background text-foreground w-full focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                     placeholder={search.placeholder ?? 'Buscar...'}
                     value={search.value}
                     onChange={e => search.onChange(e.target.value)}
@@ -59,7 +59,7 @@ export function Filters({
             {selects?.map(({ key, value, onChange, options, placeholder, selectProps }) => (
                 <select
                     key={key}
-                    className="px-3 py-2 border border-rose-200 rounded focus:ring-2 focus:ring-rose-400"
+                    className="px-3 py-2 border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                     value={value}
                     onChange={e => onChange(e.target.value)}
                     {...(selectProps ?? {})}
@@ -76,7 +76,7 @@ export function Filters({
                 <div className="flex items-center gap-2">
                     <input
                         type="date"
-                        className="px-3 py-2 border border-rose-200 rounded focus:ring-2 focus:ring-rose-400"
+                        className="px-3 py-2 border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                         placeholder={dateRange.fromPlaceholder ?? 'From'}
                         value={dateRange.value.from ?? ''}
                         max={dateRange.value.to || undefined}
@@ -88,10 +88,10 @@ export function Filters({
                         }
                         {...(dateRange.fromInputProps ?? {})}
                     />
-                    <span className="text-rose-400">—</span>
+                    <span className="text-muted-foreground">—</span>
                     <input
                         type="date"
-                        className="px-3 py-2 border border-rose-200 rounded focus:ring-2 focus:ring-rose-400"
+                        className="px-3 py-2 border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                         placeholder={dateRange.toPlaceholder ?? 'To'}
                         value={dateRange.value.to ?? ''}
                         min={dateRange.value.from || undefined}

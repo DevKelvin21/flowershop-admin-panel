@@ -20,8 +20,8 @@ export function Layout() {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <header className="px-8 shadow flex flex-col md:flex-row md:items-center md:justify-between">
+        <div className="min-h-screen flex flex-col bg-background text-foreground">
+            <header className="px-8 shadow flex flex-col md:flex-row md:items-center md:justify-between bg-card text-card-foreground">
                 <div className="flex items-center gap-4">
                     <img
                         src={logo}
@@ -33,7 +33,7 @@ export function Layout() {
                 <Navbar userEmail={user.email} onLogout={handleLogout} />
             </header>
             <main className="flex-1 p-6 flex flex-col items-center">
-                <section className="w-full max-w-8xl bg-white rounded shadow p-6 border border-primary-foreground">
+                <section className="w-full max-w-8xl bg-card text-card-foreground rounded shadow p-6 border border-border">
                     <Outlet />
                 </section>
             </main>

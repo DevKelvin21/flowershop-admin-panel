@@ -4,6 +4,6 @@ interface ErrorMessageProps {
 
 export function ErrorMessage({ error }: ErrorMessageProps) {
     return (
-        <div className="text-red-600 font-semibold">{error}</div>
+        <div className="text-destructive font-semibold">{error}</div>
     )
 }

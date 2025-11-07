@@ -19,18 +19,18 @@ export function EditableTable<T extends Record<string, unknown>>({
     const [editValue, setEditValue] = useState('')
 
     return (
-        <table className="min-w-full border border-rose-100 rounded-lg overflow-hidden">
-            <thead className="bg-rose-50">
+        <table className="min-w-full border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
+            <thead className="bg-muted">
                 <tr>
                     {columns.map(col => (
-                        <th key={col.key} className="px-4 py-2 text-left font-semibold text-rose-800">{col.label}</th>
+                        <th key={col.key} className="px-4 py-2 text-left font-semibold text-primary">{col.label}</th>
                     ))}
-                    <th className="px-4 py-2 text-left font-semibold text-rose-800">Eliminar</th>
+                    <th className="px-4 py-2 text-left font-semibold text-primary">Eliminar</th>
                 </tr>
             </thead>
             <tbody>
                 {data.map((row, rowIdx) => (
-                    <tr key={rowIdx} className="even:bg-rose-50">
+                    <tr key={rowIdx} className="even:bg-muted/50">
                         {columns.map(col => (
                             <td
                                 key={col.key}
@@ -42,7 +42,7 @@ export function EditableTable<T extends Record<string, unknown>>({
                             >
                                 {editing && editing.row === rowIdx && editing.col === col.key ? (
                                     <input
-                                        className="border border-rose-200 rounded px-2 py-1 w-full focus:ring-2 focus:ring-rose-400"
+                                        className="border border-border rounded px-2 py-1 w-full bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
                                         value={editValue}
                                         autoFocus
                                         onChange={e => setEditValue(e.target.value)}
@@ -64,7 +64,7 @@ export function EditableTable<T extends Record<string, unknown>>({
                         ))}
                         <td className="px-4 py-2">
                             <button
-                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-3 py-1 rounded"
                                 onClick={() => onDelete(rowIdx)}
                             >
                                 <FontAwesomeIcon icon={faTrash} />
