@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Lock, Mail, User } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 import { useEffect } from 'react';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
@@ -101,17 +101,6 @@ export function LoginView({
                             onSubmit={onRegister}
                         >
                             <h2 className="title text-4xl text-foreground mb-3 font-bold">Registrarse</h2>
-
-                            <div className="input-field max-w-[380px] w-full bg-muted/50 my-2.5 h-[55px] rounded-[55px] grid grid-cols-[15%_85%] px-2 relative transition-all duration-300 focus-within:bg-muted focus-within:ring-2 focus-within:ring-ring">
-                                <div className="flex items-center justify-center text-muted-foreground">
-                                    <User className="w-5 h-5" />
-                                </div>
-                                <Input
-                                    type="text"
-                                    placeholder="Nombre de usuario"
-                                    className="bg-transparent border-0 shadow-none h-full focus-visible:ring-0 focus-visible:ring-offset-0"
-                                />
-                            </div>
 
                             <div className="input-field max-w-[380px] w-full bg-muted/50 my-2.5 h-[55px] rounded-[55px] grid grid-cols-[15%_85%] px-2 relative transition-all duration-300 focus-within:bg-muted focus-within:ring-2 focus-within:ring-ring">
                                 <div className="flex items-center justify-center text-muted-foreground">
