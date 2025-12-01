@@ -1,9 +1,12 @@
+import { cn } from '@/lib/utils';
+
 interface ErrorMessageProps {
     error: string;
+    className?: string;
 }
 
-export function ErrorMessage({ error }: ErrorMessageProps) {
+export function ErrorMessage({ error, className }: ErrorMessageProps) {
     return (
-        <div className="text-red-600 font-semibold">{error}</div>
+        <div className={cn("text-destructive font-semibold", className)}>{error}</div>
     )
 }

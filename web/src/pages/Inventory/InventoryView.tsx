@@ -61,9 +61,9 @@ export function InventoryView({
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold mb-4 text-rose-700">Inventario</h2>
+        <h2 className="text-xl font-semibold mb-4 text-primary">Inventario</h2>
         <button
-          className="px-4 py-2 bg-rose-600 text-white rounded hover:bg-rose-700"
+          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
           onClick={modals.openAddModal}
         >
           Agregar Inventario
