@@ -12,19 +12,36 @@ The project is **actively migrating** from Firebase Backend-as-a-Service to a cu
 
 ### 🚧 Current Migration Status
 
-**Planning Phase Complete** (2025-12-03)
+**Phase 1 & 2 Complete** (2025-12-03)
 
-A comprehensive migration plan has been created in `/MIGRATION_PLAN.md`. Key decisions:
-- **Backend**: NestJS + REST API + PostgreSQL + Prisma
-- **Frontend**: Migrating to TanStack Router v1 + TanStack Query v5
-- **AI Integration**: Queue-based system with OpenAI GPT-4o-mini for transaction parsing
-- **Route Consolidation**: Merging `/losses` into `/inventory` as tabs
-- **Database**: PostgreSQL (migrating from SQLite + Firebase)
+✅ **Phase 1: Backend Foundation** - COMPLETE
+- PostgreSQL database with 6 models (Inventory, InventoryLoss, Transaction, TransactionItem, AiTransactionMetadata, AuditLog)
+- Global error handling with consistent responses
+- Firebase Auth Guard protecting all routes
+- Audit logging interceptor for all mutations
+- Health check endpoint
 
-**Next Steps**: See `/MIGRATION_PLAN.md` for detailed implementation roadmap (6 phases)
+✅ **Phase 2: Core API Modules** - COMPLETE
+- **Inventory Module**: 9 endpoints (CRUD + loss tracking)
+- **Transactions Module**: 7 endpoints (CRUD + analytics)
+- Complete Swagger documentation
+- DTOs with validation (class-validator)
+- Automatic inventory updates on transactions
+- Financial summary and analytics endpoints
+
+**Current State**:
+- Backend API fully functional with 19 endpoints
+- Server: http://localhost:8000
+- Swagger docs: http://localhost:8000/api/docs
+- All endpoints protected with Firebase Auth (except /health)
+- Automatic audit logging on all mutations
+
+**Next Phase**: Phase 3 - Frontend Migration (TanStack Router + Query)
 
 **Reference Documentation**:
-- `/MIGRATION_PLAN.md` - Complete modernization plan with database schema, API endpoints, and implementation phases
+- `/MIGRATION_PLAN.md` - Complete modernization plan (6 phases)
+- `/PHASE1_COMPLETE.md` - Phase 1 implementation details
+- `/PHASE2_COMPLETE.md` - Phase 2 implementation details
 - This file (CLAUDE.md) - Current architecture and conventions
 
 ## Commands
@@ -181,7 +198,7 @@ c) **Filter/UI Hooks** (`useInventoryFilters`, `useModal`):
 
 ### Backend Architecture (`/api/src`)
 
-**Current State**: Early development, minimal scaffold
+**Current State**: Phase 1 & 2 Complete - Fully Functional API
 
 - Standard NestJS module structure
 - Prisma integrated via **Global Module** pattern
@@ -191,14 +208,72 @@ c) **Filter/UI Hooks** (`useInventoryFilters`, `useModal`):
 
 **Database**:
 - Prisma schema at `/api/prisma/schema.prisma`
-- Currently has placeholder User/Post models
-- **NOT aligned with frontend Firebase models yet** - migration work needed
-- SQLite for development (will migrate to PostgreSQL - see `/MIGRATION_PLAN.md`)
+- PostgreSQL production database (`flowershop_db`)
+- **6 Models**: Inventory, InventoryLoss, Transaction, TransactionItem, AiTransactionMetadata, AuditLog
+- Complete migration from Firebase data models
+- Proper indexes and relations
 
-**Authentication** (planned but not implemented):
-- Dependencies installed: JWT, Passport, JWKS
-- **Intended pattern**: Validate Firebase tokens server-side (keep existing Firebase Auth, no re-implementation needed)
-- See `/MIGRATION_PLAN.md` Phase 1 for implementation details
+**Authentication** (✅ Implemented):
+- Firebase Admin SDK validates JWT tokens server-side
+- `FirebaseAuthGuard` protects all routes (except @Public endpoints)
+- `@CurrentUser()` decorator extracts user info from token
+- User context attached to all requests (uid, email, name)
+
+**Global Infrastructure**:
+- ✅ `HttpExceptionFilter` - Consistent error responses
+- ✅ `AuditLogInterceptor` - Auto-logs all mutations
+- ✅ `ValidationPipe` - DTO validation with class-validator
+- ✅ Health check endpoint (`/api/v1/health`)
+
+**Modules** (4):
+1. **PrismaModule** - Database client (global)
+2. **AuditModule** - Audit logging (global, 2 endpoints)
+3. **InventoryModule** - Inventory management (9 endpoints)
+4. **TransactionsModule** - Financial transactions (7 endpoints)
+
+**Total Endpoints**: 19 (1 public, 18 protected)
+
+### API Endpoints (Phase 2 Complete)
+
+**Base URL**: `http://localhost:8000/api/v1`
+**Swagger Docs**: `http://localhost:8000/api/docs`
+
+#### Health
+- `GET /health` - Health check [Public]
+
+#### Audit
+- `GET /audit` - List audit logs (paginated, filterable)
+- `GET /audit/entity/:type/:id` - Get logs for specific entity
+
+#### Inventory (9 endpoints)
+- `POST /inventory` - Create inventory item [@AuditLog]
+- `GET /inventory` - List inventory (paginated, search, filters)
+- `GET /inventory/history` - Get loss history across all items
+- `GET /inventory/:id` - Get single item with recent losses
+- `PUT /inventory/:id` - Update inventory item [@AuditLog]
+- `PATCH /inventory/:id/archive` - Archive item (soft delete) [@AuditLog]
+- `DELETE /inventory/:id` - Delete item (only if no transactions) [@AuditLog]
+- `GET /inventory/:id/losses` - Get all losses for item
+- `POST /inventory/:id/loss` - Record loss + auto-decrement [@AuditLog, @CurrentUser]
+
+#### Transactions (7 endpoints)
+- `POST /transactions` - Create SALE or EXPENSE transaction [@AuditLog, @CurrentUser]
+  - Auto-updates inventory (SALE: decrement, EXPENSE: increment)
+  - Validates inventory availability
+  - Calculates totals from inventory prices
+- `GET /transactions` - List transactions (paginated, filterable by type/date)
+- `GET /transactions/summary` - Financial summary (sales, expenses, profit)
+- `GET /transactions/analytics?period=month` - Analytics (sales by day, top items)
+- `GET /transactions/:id` - Get transaction with items
+- `PUT /transactions/:id` - Update metadata only [@AuditLog]
+- `DELETE /transactions/:id` - Delete + reverse inventory changes [@AuditLog]
+
+**Key Features**:
+- All endpoints (except `/health`) require Firebase JWT token
+- Mutations automatically logged to AuditLog table
+- User context extracted from token via @CurrentUser decorator
+- Complete Swagger documentation with examples
+- DTO validation with class-validator
 
 ## Environment Variables
 
@@ -219,38 +294,76 @@ Access via `import.meta.env.VITE_*`
 
 ### Backend (`/api/.env`)
 
+**Required**:
 ```env
-DATABASE_URL="file:./dev.db"
+# Database (PostgreSQL)
+DATABASE_URL="postgresql://flowershop:flowershop@localhost:5432/flowershop_db?schema=public"
+
+# Server
 PORT=8000
 ```
 
+**Optional** (for Firebase Auth validation):
+```env
+# Firebase Admin SDK
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
+```
+
+**Future** (Phase 4 - AI Integration):
+```env
+# OpenAI
+OPENAI_API_KEY=sk-...
+
+# Redis (for Bull queues)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+See `/api/.env.example` for complete template.
+
 ## Data Models & Conventions
 
-### Firebase Document IDs
+### PostgreSQL Database Models (Phase 1 & 2)
 
-Documents use composite IDs: `${item}_${quality}`
-- Example: `"Rose_Premium"`, `"Tulip_Standard"`
-- Creates natural uniqueness
-- Document IDs are optional in TypeScript models but auto-generated on save
+**6 Models** in `/api/prisma/schema.prisma`:
 
-### Firestore Collections
+1. **Inventory** - Inventory items
+   - Unique constraint: `(item, quality)`
+   - Fields: id, item, quality, quantity, unitPrice, isActive, timestamps
+   - Relations: losses[], transactions[]
 
-- `inventory` - Inventory items
-- `losses` - Inventory loss records
+2. **InventoryLoss** - Loss tracking
+   - Fields: id, inventoryId, quantity, reason, notes, recordedBy, recordedAt
+   - Relation: inventory
 
-### Timestamp Formatting
+3. **Transaction** - Sales and expenses
+   - Fields: id, type (SALE/EXPENSE), totalAmount, customerName, notes, messageSent, createdBy, timestamps
+   - Relations: items[], aiMetadata?
 
-- Custom `formatDateTime` in `/repositories/utils/date-formatter.ts`
-- `lastUpdated` field auto-set on add/update
+4. **TransactionItem** - Line items
+   - Fields: id, transactionId, inventoryId, quantity, unitPrice, subtotal
+   - Relations: transaction, inventory
 
-### Logging
+5. **AiTransactionMetadata** - AI parsing data
+   - Fields: id, transactionId, userPrompt, aiResponse, confidence, processingTime, createdAt
+   - Relation: transaction (one-to-one)
 
-Logs sent to external Cloud Function (not stored locally):
-```
-https://cf-flowershop-logs-hanlder-265978683065.us-central1.run.app/log_operation
-```
-- Async, fails silently
-- Don't rely on logging for critical operations
+6. **AuditLog** - Audit trail
+   - Fields: id, userId, action, entityType, entityId, changes (JSON), ipAddress, userAgent, timestamp
+   - Indexes: `(userId, timestamp)`, `(entityType, entityId)`
+
+### Legacy Firebase Models (Frontend - Phase 3 Migration)
+
+**Frontend still uses Firebase** (until Phase 3):
+- `inventory` collection - Inventory items
+- `losses` collection - Inventory loss records
+- Document IDs: `${item}_${quality}` (e.g., "Rose_Premium")
+
+**External Logging** (legacy, to be replaced):
+- Cloud Function: `https://cf-flowershop-logs-hanlder-265978683065.us-central1.run.app/log_operation`
+- Now replaced by AuditLog table in PostgreSQL
 
 ## Code Style & Conventions
 
@@ -477,9 +590,22 @@ The Repository pattern, Service interfaces, and factory functions are specifical
 
 ## Important Gotchas
 
+### Backend (NestJS API)
+1. **PostgreSQL must be running** - Start with `brew services start postgresql@14`
+2. **Environment variables required** - See `/api/.env.example`
+3. **Firebase Auth optional** - API works without Firebase config (warns on startup)
+4. **Prisma Client generation** - Run `npm run prisma:generate` after schema changes
+5. **@AuditLog decorator** - Auto-logs mutations to AuditLog table
+6. **Database transactions** - Use `prisma.$transaction()` for atomic operations
+
+### Frontend (React)
 1. **Service initialization order matters** - see comments in `registry.ts`
 2. **Always use named exports** - no default exports
-3. **Firebase composite IDs** - format: `${item}_${quality}`
-4. **Backend models don't match frontend yet** - Prisma schema is placeholder
-5. **Logging is external and fails silently**
-6. **Props grouped by concern** in Views (`filters`, `table`, `modals`)
+3. **Firebase composite IDs** - format: `${item}_${quality}` (legacy, will change in Phase 3)
+4. **Frontend still uses Firebase** - Migration to NestJS API pending (Phase 3)
+5. **Props grouped by concern** in Views (`filters`, `table`, `modals`)
+
+### Migration Status
+- ✅ Backend API ready (PostgreSQL + NestJS)
+- ⏳ Frontend still on Firebase (Phase 3 will migrate to API)
+- ⏳ Transaction financial module uses mock data (Phase 3 will connect to API)
