@@ -6,13 +6,20 @@ import { PrismaModule } from './prisma/prisma.module';
 import { FirebaseAuthGuard } from './common/guards/firebase-auth.guard';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import { AuditModule } from './modules/audit/audit.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { TransactionsModule } from './modules/transactions/transactions.module';
 import { initializeFirebase } from './config/firebase.config';
 
 // Initialize Firebase on module load
 initializeFirebase();
 
 @Module({
-  imports: [PrismaModule, AuditModule],
+  imports: [
+    PrismaModule,
+    AuditModule,
+    InventoryModule,
+    TransactionsModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
