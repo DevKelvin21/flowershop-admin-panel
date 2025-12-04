@@ -2,22 +2,33 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { VersioningType, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
+
+  // Global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',
   });
-  
+
   app.setGlobalPrefix('api');
-  
-  app.useGlobalPipes(new ValidationPipe({
-    transform: true,
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  }));
+
+  // Global validation pipe with detailed error messages
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+      errorHttpStatusCode: 422,
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('FlowerShop Transaction Management API v1')
