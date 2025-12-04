@@ -1,22 +1,28 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { FirebaseAuthGuard } from './common/guards/firebase-auth.guard';
+import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
+import { AuditModule } from './modules/audit/audit.module';
 import { initializeFirebase } from './config/firebase.config';
 
 // Initialize Firebase on module load
 initializeFirebase();
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuditModule],
   controllers: [AppController],
   providers: [
     AppService,
     {
       provide: APP_GUARD,
       useClass: FirebaseAuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditLogInterceptor,
     },
   ],
 })
