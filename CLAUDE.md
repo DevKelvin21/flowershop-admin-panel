@@ -10,6 +10,23 @@ This is a **monorepo** for a flower shop management system with:
 
 The project is **actively migrating** from Firebase Backend-as-a-Service to a custom NestJS API. The frontend architecture is designed with abstraction layers (Repository pattern, Service layer) to support this transition.
 
+### 🚧 Current Migration Status
+
+**Planning Phase Complete** (2025-12-03)
+
+A comprehensive migration plan has been created in `/MIGRATION_PLAN.md`. Key decisions:
+- **Backend**: NestJS + REST API + PostgreSQL + Prisma
+- **Frontend**: Migrating to TanStack Router v1 + TanStack Query v5
+- **AI Integration**: Queue-based system with OpenAI GPT-4o-mini for transaction parsing
+- **Route Consolidation**: Merging `/losses` into `/inventory` as tabs
+- **Database**: PostgreSQL (migrating from SQLite + Firebase)
+
+**Next Steps**: See `/MIGRATION_PLAN.md` for detailed implementation roadmap (6 phases)
+
+**Reference Documentation**:
+- `/MIGRATION_PLAN.md` - Complete modernization plan with database schema, API endpoints, and implementation phases
+- This file (CLAUDE.md) - Current architecture and conventions
+
 ## Commands
 
 ### Frontend Development (`/web`)
@@ -176,11 +193,12 @@ c) **Filter/UI Hooks** (`useInventoryFilters`, `useModal`):
 - Prisma schema at `/api/prisma/schema.prisma`
 - Currently has placeholder User/Post models
 - **NOT aligned with frontend Firebase models yet** - migration work needed
-- SQLite for development
+- SQLite for development (will migrate to PostgreSQL - see `/MIGRATION_PLAN.md`)
 
 **Authentication** (planned but not implemented):
 - Dependencies installed: JWT, Passport, JWKS
-- Intended pattern: Validate Firebase tokens OR issue own JWTs
+- **Intended pattern**: Validate Firebase tokens server-side (keep existing Firebase Auth, no re-implementation needed)
+- See `/MIGRATION_PLAN.md` Phase 1 for implementation details
 
 ## Environment Variables
 
@@ -440,14 +458,22 @@ Architecture supports testing but tests not written yet.
 
 ## Migration Context
 
-**Current**: Frontend → Firebase (Auth + Firestore)
-**In Progress**: NestJS API scaffold
-**Future**: Frontend → NestJS API (with Firebase Auth validation)
+**Current State**: Frontend → Firebase (Auth + Firestore)
+**Migration Target**: Frontend → NestJS REST API + PostgreSQL (with Firebase Auth validation)
+
+**Migration Plan**: See `/MIGRATION_PLAN.md` for complete details
 
 The Repository pattern, Service interfaces, and factory functions are specifically designed to support this migration:
 1. Swap factory functions to return HTTP-based repository implementations
 2. Keep same interfaces and Service layer
 3. Minimal changes to Container components
+
+**Key Migration Changes**:
+- **Router**: React Router v7 → TanStack Router v1 (file-based, type-safe)
+- **Data Fetching**: Custom hooks → TanStack Query v5 (caching, optimistic updates)
+- **Data Source**: Firebase Firestore → PostgreSQL via NestJS REST API
+- **UI Consolidation**: `/losses` route merged into `/inventory` as tabs
+- **New Features**: AI-powered transaction parsing, comprehensive audit logging
 
 ## Important Gotchas
 
