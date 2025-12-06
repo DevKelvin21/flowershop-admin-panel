@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, useLocation } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -22,12 +22,12 @@ interface NavbarProps {
 const navItems = [
     { path: '/', label: 'Reporte' },
     { path: '/inventory', label: 'Inventario' },
-    { path: '/losses', label: 'Pérdidas' },
     { path: '/financial', label: 'Ventas y Gastos' },
-];
+] as const;
 
 export function Navbar({ userEmail, onLogout }: NavbarProps) {
     const [isDark, setIsDark] = useState(false);
+    const location = useLocation();
 
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -61,18 +61,21 @@ export function Navbar({ userEmail, onLogout }: NavbarProps) {
     return (
         <NavigationMenu className="flex justify-between items-center p-4" viewport={false}>
             <NavigationMenuList className="flex gap-2">
-                {navItems.map(({ path, label }) => (
-                    <NavigationMenuItem key={path}>
-                        <NavigationMenuLink asChild className="focus:bg-primary focus:text-primary-foreground rounded-md">
-                            <NavLink
-                                to={path}
-                                className={({ isActive }) => (isActive ? 'bg-primary' : '')}
-                            >
-                                {label}
-                            </NavLink>
-                        </NavigationMenuLink>
-                    </NavigationMenuItem>
-                ))}
+                {navItems.map(({ path, label }) => {
+                    const isActive = location.pathname === path;
+                    return (
+                        <NavigationMenuItem key={path}>
+                            <NavigationMenuLink asChild className="focus:bg-primary focus:text-primary-foreground rounded-md">
+                                <Link
+                                    to={path}
+                                    className={cn(isActive && 'bg-primary')}
+                                >
+                                    {label}
+                                </Link>
+                            </NavigationMenuLink>
+                        </NavigationMenuItem>
+                    );
+                })}
             </NavigationMenuList>
             <div className="flex items-center gap-4 ml-6">
                 <div className="flex items-center gap-2">

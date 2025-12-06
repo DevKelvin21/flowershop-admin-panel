@@ -5,14 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 This is a **monorepo** for a flower shop management system with:
-- **Frontend (`/web`)**: React 19 + TypeScript + Firebase (current backend)
-- **Backend (`/api`)**: NestJS + Prisma (future backend, currently in early development)
+- **Frontend (`/web`)**: React 19 + TypeScript + TanStack Router/Query + NestJS API
+- **Backend (`/api`)**: NestJS + Prisma + PostgreSQL (fully functional)
 
-The project is **actively migrating** from Firebase Backend-as-a-Service to a custom NestJS API. The frontend architecture is designed with abstraction layers (Repository pattern, Service layer) to support this transition.
+The project has **completed migration** from Firebase Backend-as-a-Service to a custom NestJS REST API. The frontend now uses TanStack Router for routing and TanStack Query for data fetching.
 
 ### 🚧 Current Migration Status
 
-**Phase 1 & 2 Complete** (2025-12-03)
+**Phase 1, 2 & 3 Complete** (2025-12-05)
 
 ✅ **Phase 1: Backend Foundation** - COMPLETE
 - PostgreSQL database with 6 models (Inventory, InventoryLoss, Transaction, TransactionItem, AiTransactionMetadata, AuditLog)
@@ -29,19 +29,29 @@ The project is **actively migrating** from Firebase Backend-as-a-Service to a cu
 - Automatic inventory updates on transactions
 - Financial summary and analytics endpoints
 
+✅ **Phase 3: Frontend Migration** - COMPLETE
+- **TanStack Router**: File-based routing with type safety
+- **TanStack Query**: Data fetching with caching & optimistic updates
+- **HTTP API Client**: Automatic Firebase token injection
+- **UI Consolidation**: Losses merged into Inventory page as tabs
+- **Financial Module**: Connected to real API (no more mock data)
+
 **Current State**:
 - Backend API fully functional with 19 endpoints
+- Frontend connected to NestJS API via TanStack Query
 - Server: http://localhost:8000
+- Frontend: http://localhost:5173
 - Swagger docs: http://localhost:8000/api/docs
 - All endpoints protected with Firebase Auth (except /health)
 - Automatic audit logging on all mutations
 
-**Next Phase**: Phase 3 - Frontend Migration (TanStack Router + Query)
+**Next Phase**: Phase 4 - AI Integration (OpenAI + BullMQ)
 
 **Reference Documentation**:
 - `/MIGRATION_PLAN.md` - Complete modernization plan (6 phases)
 - `/PHASE1_COMPLETE.md` - Phase 1 implementation details
 - `/PHASE2_COMPLETE.md` - Phase 2 implementation details
+- `/PHASE3_COMPLETE.md` - Phase 3 implementation details
 - This file (CLAUDE.md) - Current architecture and conventions
 
 ## Commands
@@ -134,15 +144,48 @@ Container → Hook → Service (business logic) → Repository (data access) →
 - **Services** = Business logic, coordinate multiple repositories
 - Example: `InventoryService.addInventoryLoss()` validates inventory, updates inventory, adds loss record, AND logs the operation
 
-#### 3. Container/View Pattern (MANDATORY for all pages)
+#### 3. TanStack Router File-Based Routing
 
-**Every page must follow this pattern**:
+**Route Structure** (`/web/src/routes/`):
+```
+routes/
+├── __root.tsx              # Root layout with QueryClientProvider
+├── _authenticated.tsx      # Auth layout wrapper (requires login)
+├── _authenticated/
+│   ├── index.tsx          # Dashboard (/)
+│   ├── inventory.tsx      # Inventory + Losses tabs (/inventory)
+│   └── financial.tsx      # Financial transactions (/financial)
+└── login.tsx              # Public login page (/login)
+```
 
-**Container** (`*Container.tsx`):
-- Imports singleton services from registry
-- Uses hooks for state management
-- Contains all business logic and event handlers
-- Passes data to View via organized props
+**Route Component Pattern**:
+- Each route file exports `Route` from `createFileRoute()`
+- Route components use TanStack Query hooks for data
+- Views remain pure presentational components
+
+#### 4. TanStack Query Data Fetching
+
+**Query Hooks** (`/hooks/queries/`):
+```typescript
+// Use query hooks in route components
+const { data, isLoading, error } = useInventoryList();
+const createMutation = useCreateInventory();
+
+// Mutations invalidate related queries automatically
+await createMutation.mutateAsync(newItem);
+```
+
+**Query Keys Pattern**:
+```typescript
+export const inventoryKeys = {
+  all: ['inventory'] as const,
+  lists: () => [...inventoryKeys.all, 'list'] as const,
+  list: (params) => [...inventoryKeys.lists(), params] as const,
+  detail: (id) => [...inventoryKeys.all, 'detail', id] as const,
+};
+```
+
+#### 5. View Pattern (Pure Presentational)
 
 **View** (`*View.tsx`):
 - Pure presentational component

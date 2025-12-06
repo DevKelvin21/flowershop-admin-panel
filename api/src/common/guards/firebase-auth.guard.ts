@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { getFirebaseAuth } from '../../config/firebase.config';
+import { getFirebaseAuth, isFirebaseInitialized } from '../../config/firebase.config';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 
@@ -28,6 +28,23 @@ export class FirebaseAuthGuard implements CanActivate {
       return true;
     }
 
+    // If Firebase is not initialized, bypass auth (development mode)
+    if (!isFirebaseInitialized()) {
+      this.logger.warn(
+        'Firebase not initialized - BYPASSING AUTH (development mode only!)',
+      );
+      // Attach mock user for development
+      const request = context.switchToHttp().getRequest<Request>();
+      (request as any).user = {
+        uid: 'dev-user',
+        email: 'dev@localhost',
+        emailVerified: true,
+        name: 'Development User',
+        picture: null,
+      };
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request);
 
@@ -36,7 +53,11 @@ export class FirebaseAuthGuard implements CanActivate {
     }
 
     try {
-      const decodedToken = await getFirebaseAuth().verifyIdToken(token);
+      const auth = getFirebaseAuth();
+      if (!auth) {
+        throw new UnauthorizedException('Firebase Auth not available');
+      }
+      const decodedToken = await auth.verifyIdToken(token);
 
       // Attach user info to request object
       (request as any).user = {
