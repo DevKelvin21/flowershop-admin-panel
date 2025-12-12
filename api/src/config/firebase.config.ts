@@ -28,6 +28,18 @@ export function initializeFirebase(): admin.app.App | null {
   // Handle escaped newlines in the private key
   const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
 
+  // Validate that the private key looks like a PEM key
+  if (!privateKey.includes('-----BEGIN') || !privateKey.includes('PRIVATE KEY-----')) {
+    console.warn('');
+    console.warn('⚠️  Firebase Admin SDK not initialized: Invalid private key format');
+    console.warn('   The FIREBASE_PRIVATE_KEY must be a valid PEM-formatted RSA private key');
+    console.warn('   It should start with "-----BEGIN PRIVATE KEY-----" or "-----BEGIN RSA PRIVATE KEY-----"');
+    console.warn('');
+    console.warn('   ⚠️  Authentication is BYPASSED - all requests will use a mock dev user');
+    console.warn('');
+    return null;
+  }
+
   try {
     firebaseApp = admin.initializeApp({
       credential: admin.credential.cert({
@@ -40,9 +52,20 @@ export function initializeFirebase(): admin.app.App | null {
     console.log('✅ Firebase Admin SDK initialized successfully');
     return firebaseApp;
   } catch (error) {
-    console.error('❌ Failed to initialize Firebase Admin SDK:', error);
-    console.warn('   Authentication will be BYPASSED until Firebase is configured correctly');
-    console.warn('   Check that FIREBASE_PRIVATE_KEY is properly formatted (see CLAUDE.md)');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.warn('');
+    console.warn('⚠️  Firebase Admin SDK initialization failed');
+    console.warn(`   Error: ${errorMessage}`);
+    console.warn('');
+    console.warn('   This is likely due to an invalid FIREBASE_PRIVATE_KEY format.');
+    console.warn('   The private key must be a valid PEM-formatted RSA key.');
+    console.warn('');
+    console.warn('   💡 To fix this:');
+    console.warn('   1. Remove or rename your .env file temporarily');
+    console.warn('   2. Or set FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL to empty');
+    console.warn('');
+    console.warn('   ⚠️  Authentication is BYPASSED - all requests will use a mock dev user');
+    console.warn('');
     return null;
   }
 }
