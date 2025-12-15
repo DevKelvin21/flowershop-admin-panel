@@ -7,7 +7,7 @@ import {
   useDeleteInventory,
   useAddInventoryLoss,
 } from '@/hooks/queries/inventory';
-import type { Inventory, CreateInventoryDto, AddLossDto } from '@/lib/api/types';
+import type { CreateInventoryDto, AddLossDto } from '@/lib/api/types';
 import type { InventoryItem, InventoryLoss } from '@/shared/models/inventory';
 
 /**
@@ -36,6 +36,7 @@ export function useInventoryData() {
       item: item.item,
       quantity: item.quantity,
       quality: item.quality,
+      unitPrice: item.unitPrice,
       lastUpdated: new Date(item.updatedAt).toLocaleString(),
     }));
   }, [inventoryData]);
@@ -44,9 +45,12 @@ export function useInventoryData() {
     if (!historyData?.data) return [];
     return historyData.data.map((loss) => ({
       id: loss.id,
+      inventoryId: loss.inventoryId,
       item: loss.inventory?.item || '',
       quality: loss.inventory?.quality || '',
       quantity: loss.quantity,
+      reason: loss.reason,
+      notes: loss.notes,
       timestamp: loss.recordedAt,
     }));
   }, [historyData]);
@@ -83,7 +87,6 @@ export function useInventoryData() {
  * Follows the command hook pattern - accepts dependencies, returns wrapped functions.
  */
 export function useInventoryCommands(
-  inventoryData: { data: Inventory[] } | undefined,
   callbacks: {
     onAddSuccess?: () => void;
     onUpdateSuccess?: () => void;
@@ -98,11 +101,15 @@ export function useInventoryCommands(
   const addLossMutation = useAddInventoryLoss();
 
   const addInventory = async (item: InventoryItem) => {
+    if (item.unitPrice === undefined || item.unitPrice === null) {
+      callbacks.onError?.(new Error('El precio unitario es requerido'));
+      return;
+    }
     const dto: CreateInventoryDto = {
       item: item.item,
       quality: item.quality,
       quantity: item.quantity,
-      unitPrice: 0,
+      unitPrice: item.unitPrice,
     };
     try {
       await createMutation.mutateAsync(dto);
@@ -130,23 +137,18 @@ export function useInventoryCommands(
     }
   };
 
-  const addLoss = async (loss: InventoryLoss) => {
-    // Find inventory item by name and quality
-    const inventoryItem = inventoryData?.data.find(
-      (i) => i.item === loss.item && i.quality === loss.quality
-    );
-    if (!inventoryItem) {
-      callbacks.onError?.(new Error('Inventory item not found'));
+  const addLoss = async (loss: { inventoryId?: string; quantity: number; reason?: string; notes?: string }) => {
+    if (!loss.inventoryId) {
+      callbacks.onError?.(new Error('Selecciona un artículo de inventario'));
       return;
     }
-
     const dto: AddLossDto = {
       quantity: loss.quantity,
-      reason: 'loss',
-      notes: undefined,
+      reason: loss.reason ?? 'loss',
+      notes: loss.notes,
     };
     try {
-      await addLossMutation.mutateAsync({ inventoryId: inventoryItem.id, data: dto });
+      await addLossMutation.mutateAsync({ inventoryId: loss.inventoryId, data: dto });
       callbacks.onLossSuccess?.();
     } catch (error) {
       callbacks.onError?.(error);

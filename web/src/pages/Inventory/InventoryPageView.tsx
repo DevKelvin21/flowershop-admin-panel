@@ -42,15 +42,12 @@ export interface InventoryPageViewProps {
   // Losses tab props
   losses: {
     data: InventoryLoss[];
-    itemOptions: string[];
-    qualityOptions: string[];
     filters: {
       search: string;
       dateRange: { from: string; to: string };
       onSearchChange: (search: string) => void;
       onDateRangeChange: (range: { from: string; to: string }) => void;
     };
-    onDelete: (loss: InventoryLoss) => void;
   };
 
   // Modal props
@@ -65,12 +62,12 @@ export interface InventoryPageViewProps {
       isOpen: boolean;
       onOpen: () => void;
       onClose: () => void;
-      onSubmit: (loss: InventoryLoss) => void;
+      onSubmit: (loss: { inventoryId?: string; quantity: number; reason?: string; notes?: string }) => void;
     };
     confirm: {
       isOpen: boolean;
       type: 'delete' | 'edit' | null;
-      selectedItem: InventoryItem | InventoryLoss | null;
+      selectedItem: InventoryItem | null;
       pendingEdit: { rowIdx: number; colKey: string; value: string } | null;
       onCancel: () => void;
       onConfirm: () => void;
@@ -159,7 +156,7 @@ export function InventoryPageView({
               toPlaceholder: 'Hasta',
             }}
           />
-          <LossesTable data={losses.data} onDelete={losses.onDelete} />
+          <LossesTable data={losses.data} />
         </TabsContent>
       </Tabs>
 
@@ -173,8 +170,7 @@ export function InventoryPageView({
 
       {/* Add Loss Modal */}
       <AddInventoryLossModal
-        itemOptions={losses.itemOptions}
-        inventoryQualityTypes={losses.qualityOptions}
+        inventoryOptions={inventory.data}
         open={modals.addLoss.isOpen}
         onCancel={modals.addLoss.onClose}
         onConfirm={modals.addLoss.onSubmit}
@@ -203,10 +199,8 @@ export function InventoryPageView({
  */
 function LossesTable({
   data,
-  onDelete,
 }: {
   data: InventoryLoss[];
-  onDelete: (loss: InventoryLoss) => void;
 }) {
   return (
     <table className="min-w-full border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
@@ -216,7 +210,6 @@ function LossesTable({
           <th className="px-4 py-2 text-left font-semibold text-primary">Calidad</th>
           <th className="px-4 py-2 text-left font-semibold text-primary">Cantidad</th>
           <th className="px-4 py-2 text-left font-semibold text-primary">Fecha</th>
-          <th className="px-4 py-2 text-left font-semibold text-primary">Eliminar</th>
         </tr>
       </thead>
       <tbody>
@@ -226,14 +219,6 @@ function LossesTable({
             <td className="px-4 py-2">{loss.quality}</td>
             <td className="px-4 py-2">{loss.quantity}</td>
             <td className="px-4 py-2">{new Date(loss.timestamp).toLocaleDateString()}</td>
-            <td className="px-4 py-2">
-              <button
-                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-3 py-1 rounded"
-                onClick={() => onDelete(loss)}
-              >
-                Eliminar
-              </button>
-            </td>
           </tr>
         ))}
       </tbody>
@@ -243,14 +228,10 @@ function LossesTable({
 
 function getConfirmMessage(
   type: 'delete' | 'edit' | null,
-  item: InventoryItem | InventoryLoss | null
+  item: InventoryItem | null
 ): string {
   if (type === 'delete') {
-    // Check if it's a loss (has timestamp) or inventory item
-    if (item && 'timestamp' in item) {
-      return '¿Estás seguro de que deseas eliminar esta pérdida? Esto restaurará la cantidad en inventario.';
-    }
-    return '¿Estás seguro de que deseas eliminar este artículo del inventario?';
+    return `¿Estás seguro de que deseas eliminar ${item?.item || 'este artículo'} del inventario?`;
   }
   return '¿Estás seguro de que deseas editar este artículo?';
 }

@@ -7,7 +7,7 @@ import { useInventoryData, useInventoryCommands } from '@/hooks/useInventoryData
 import { useInventoryPageFilters } from '@/hooks/useInventoryPageFilters';
 import { InventoryPageView } from '@/pages/Inventory/InventoryPageView';
 import type { Inventory } from '@/lib/api/types';
-import type { InventoryItem, InventoryLoss } from '@/shared/models/inventory';
+import type { InventoryItem } from '@/shared/models/inventory';
 
 export const Route = createFileRoute('/_authenticated/inventory')({
   component: InventoryContainer,
@@ -32,7 +32,6 @@ function InventoryContainer() {
     inventory,
     losses,
     qualityOptions,
-    itemOptions,
     isLoading,
     error,
   } = useInventoryData();
@@ -48,7 +47,6 @@ function InventoryContainer() {
   // Confirm modal state
   const [confirmModalType, setConfirmModalType] = useState<'delete' | 'edit' | null>(null);
   const [selectedItem, setSelectedItem] = useState<Inventory | null>(null);
-  const [selectedLoss, setSelectedLoss] = useState<InventoryLoss | null>(null);
   const [pendingEdit, setPendingEdit] = useState<{
     rowIdx: number;
     colKey: string;
@@ -56,7 +54,7 @@ function InventoryContainer() {
   } | null>(null);
 
   // Command hooks with callbacks
-  const commands = useInventoryCommands(inventoryData, {
+  const commands = useInventoryCommands({
     onAddSuccess: () => addItemModal.close(),
     onUpdateSuccess: () => handleCancelConfirmModal(),
     onDeleteSuccess: () => handleCancelConfirmModal(),
@@ -84,18 +82,11 @@ function InventoryContainer() {
     }
   };
 
-  const handleLossDelete = (loss: InventoryLoss) => {
-    setSelectedLoss(loss);
-    setConfirmModalType('delete');
-    confirmModal.open();
-  };
-
   const handleConfirmModalSubmit = async () => {
     if (confirmModalType === 'delete') {
       if (selectedItem) {
         await commands.deleteInventory(selectedItem.id);
       }
-      // Note: Loss deletion not yet implemented in backend
     } else if (confirmModalType === 'edit' && selectedItem && pendingEdit) {
       await commands.updateInventory(selectedItem.id, {
         [pendingEdit.colKey]: pendingEdit.value,
@@ -107,12 +98,11 @@ function InventoryContainer() {
     confirmModal.close();
     setConfirmModalType(null);
     setSelectedItem(null);
-    setSelectedLoss(null);
     setPendingEdit(null);
   };
 
   // Build selected item for confirm modal display
-  const getConfirmSelectedItem = (): InventoryItem | InventoryLoss | null => {
+  const getConfirmSelectedItem = (): InventoryItem | null => {
     if (selectedItem) {
       return {
         item: selectedItem.item,
@@ -120,7 +110,7 @@ function InventoryContainer() {
         quantity: selectedItem.quantity,
       };
     }
-    return selectedLoss;
+    return null;
   };
 
   return (
@@ -147,15 +137,12 @@ function InventoryContainer() {
       }}
       losses={{
         data: filters.losses.filteredData,
-        itemOptions,
-        qualityOptions,
         filters: {
           search: filters.losses.search,
           dateRange: filters.losses.dateFilter,
           onSearchChange: filters.losses.setSearch,
           onDateRangeChange: filters.losses.setDateFilter,
         },
-        onDelete: handleLossDelete,
       }}
       modals={{
         addItem: {

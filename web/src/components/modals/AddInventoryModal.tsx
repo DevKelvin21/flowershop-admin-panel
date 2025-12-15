@@ -14,13 +14,14 @@ export function AddInventoryModal({ open, onCancel, onConfirm, onError }: AddInv
         item: '',
         quantity: 0,
         quality: '',
+        unitPrice: 0,
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await onConfirm(formData);
-            setFormData({ item: '', quantity: 0, quality: '' });
+            setFormData({ item: '', quantity: 0, quality: '', unitPrice: 0 });
             onCancel();
         } catch (err) {
             onError(err);
@@ -56,6 +57,15 @@ export function AddInventoryModal({ open, onCancel, onConfirm, onError }: AddInv
                         <option value={INVENTORY_QUALITIES.SPECIAL}>Especial</option>
                         <option value={INVENTORY_QUALITIES.REGULAR}>Regular</option>
                     </select>
+                    <input
+                        className="border border-border rounded px-3 py-2 bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
+                        placeholder="Precio unitario"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={formData.unitPrice}
+                        onChange={e => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
+                    />
                     <div className="flex justify-end gap-2 mt-2">
                         <button
                             type="button"
