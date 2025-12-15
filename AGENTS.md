@@ -1,27 +1,76 @@
-# Repository Guidelines
+# AGENTS.md
 
-## Project Structure & Module Organization
-The monorepo splits concerns into `web/` (React admin) and `api/` (NestJS service). Within `web/src` you will find feature folders such as `components/`, `pages/`, `routes/`, `repositories/`, and `services/`; co-locate Firebase-facing code under `services` and keep shared UI primitives inside `shared/`. **UI components** follow shadcn/ui patterns in `web/src/components/ui/` using Radix UI primitives. Backend code resides in `api/src` using Nest modules (`*.module.ts`, `*.service.ts`, `*.controller.ts`). Database artifacts live in `api/prisma/` (schema plus migrations), and integration tests sit under `api/test`. Static assets for Vite belong in `web/public` and `web/src/assets`.
+Guidance for AI agents working in this repository. Aligns with `CLAUDE.md`. Migration plan phases **1–4 are complete**; AI integration (OpenAI + BullMQ) is in place. Next focus: Phase 5 optimization.
 
-## Build, Test, and Development Commands
-- `cd web && npm run dev` starts the Vite server on port `5173` with Firebase auth driven by `.env`.
-- `cd web && npm run build` compiles TypeScript and outputs `web/dist` for deployment; `npm run lint` enforces the ESLint flat config before pushing UI changes.
-- `cd api && npm run start:dev` watches the Nest app on `3000`; run `npm run prisma:generate` and `npm run prisma:migrate` whenever the Prisma schema changes.
-- `cd api && npm run test` executes Jest unit specs, while `npm run test:e2e` covers request/response flows end to end.
+## Project Overview
+- Monorepo with **frontend `/web`** (React 19 + TypeScript + TanStack Router/Query) and **backend `/api`** (NestJS + Prisma + PostgreSQL).
+- Migration off Firebase BaaS is finished. Frontend talks to the NestJS REST API; Firebase is kept for auth token issuance.
+- Current services: Backend on `http://localhost:8000` (`/api/v1` prefix), Frontend on `http://localhost:5173`, Swagger at `http://localhost:8000/api/docs`.
 
-## Coding Style & Naming Conventions
-Stick to strict TypeScript, prefer 2-space indentation (matches existing files), and avoid default exports for React components. Components, services, and hooks follow `PascalCase`, repositories end with `Repository`, and hooks follow the `useThing` pattern. Keep React views dumb by pushing remote calls into `repositories/` and `services/`. Frontend linting uses `web/eslint.config.js`. Always use **path alias `@/`** for imports (e.g., `@/components/ui/button`, `@/lib/utils`).
+## Migration Status (Done)
+- ✅ Phase 1: Backend foundation — PostgreSQL schema (Inventory, InventoryLoss, Transaction, TransactionItem, AiTransactionMetadata, AuditLog), global error handling, Firebase Auth guard, audit logging, health check.
+- ✅ Phase 2: Core API modules — Inventory (9 endpoints), Transactions (7 endpoints), DTO validation, Swagger docs, automatic inventory updates/analytics.
+- ✅ Phase 3: Frontend migration — TanStack Router (file-based), TanStack Query data layer, HTTP API client with Firebase token injection, Inventory losses merged as tabs, Financial module wired to real API.
+- ✅ Phase 4: AI integration — OpenAI-backed transaction parsing with BullMQ/Redis queue, AI metadata stored, `/api/v1/ai/parse-transaction` available, frontend flow pre-fills transactions from AI results.
+- ⏭️ Next: Phase 5 optimization/polish; Phase 6 deployment hardening.
 
-**UI Component Conventions:**
-- UI primitives in `/web/src/components/ui/` follow shadcn/ui patterns using Radix UI
-- Use `cn()` utility from `@/lib/utils` for conditional class merging (clsx + tailwind-merge)
-- Components use `class-variance-authority` (cva) for variant management
-- Props use explicit TypeScript interfaces, grouped by concern (filters, search, dateRange, etc.)
-- Support Radix `asChild` prop via Slot pattern for composability
-- Use Lucide React for icons (primary), Font Awesome is legacy
+## Commands
+- Frontend (`/web`): `npm install`; `npm run dev`; `npm run build`; `npm run preview`; `npm run lint`.
+- Backend (`/api`): `npm install`; `npm run prisma:generate`; `npm run start:dev`; `npm run start:prod`; `npm run build`; `npm run prisma:migrate`; `npm run test`; `npm run test:e2e`; `npm run test:cov`.
+- Data: `npx prisma studio` for DB GUI.
 
-## Testing Guidelines
-Add React specs with Vitest + React Testing Library beside the component (`Button.test.tsx`) and mock Firebase via MSW when touching networked flows. Nest already wires Jest: place unit specs next to the source (`*.spec.ts`) and e2e specs under `api/test`. Target smoke coverage for every route touched and ensure migrations include seed data for deterministic tests.
+## Frontend Architecture (`/web/src`)
+- **Service registry (critical)**: `/web/src/services/registry.ts` centralizes singletons (logging → auth → repositories → domain services). Import services from `../services` or `../services/registry`; never instantiate directly.
+- **Repository pattern**: interfaces in `repositories/interfaces/`, implementations (legacy Firebase + HTTP) created via `repositories/factory.ts`; services encapsulate business logic in `repositories/services/`.
+- **Routing**: TanStack Router file-based under `routes/`:
+  - `__root.tsx` (providers), `_authenticated.tsx` (auth layout), `_authenticated/index.tsx` (dashboard), `_authenticated/inventory.tsx`, `_authenticated/financial.tsx`, `login.tsx`.
+- **Data fetching**: TanStack Query hooks in `hooks/queries/` and mutations; query key helpers per domain. Optimistic updates and automatic invalidation used for mutations.
+- **View pattern**: Containers handle data/services; `*View.tsx` components are presentational with grouped props (`filters`, `table`, `modals`). Hooks accept services as params for DI (`useInventory(inventoryService)`).
+- **Auth flow**: Firebase SDK init in `/web/src/db/firestore.ts`; `AuthService` interface + `useAuth`; protected routes wrapped under `_authenticated`. HTTP client injects Firebase ID token into API calls.
 
-## Commit & Pull Request Guidelines
-Follow Conventional Commits (`feat:`, `fix:`, `chore:`); keep subject lines under 72 characters and explain scope in the body when touching both `web` and `api`. Branches should match `feature/<ticket>` or `bugfix/<ticket>`. PRs must describe the change, list affected routes/modules, link the tracking issue, and attach before/after screenshots for UI edits. Confirm lint, tests, and Prisma migrations in the PR checklist before requesting review.
+## Backend Architecture (`/api/src`)
+- Modules: Prisma (global), Audit (global), Inventory, Transactions, AI (queue-backed), plus supporting common layer (filters, guards, interceptors, decorators).
+- Global infra: `HttpExceptionFilter`, `AuditLogInterceptor`, `ValidationPipe`, `FirebaseAuthGuard` (all routes protected except `@Public()` health).
+- AI: BullMQ processor for transaction parsing, OpenAI prompt builds from current inventory, results stored in `AiTransactionMetadata`.
+- Endpoints (base `http://localhost:8000/api/v1`): 19+ endpoints covering health, audit logs, inventory CRUD/losses, transactions CRUD/analytics/summary, AI parse endpoint.
+- Database: PostgreSQL schema in `/api/prisma/schema.prisma` with six models; indexes on hot paths and relations.
+
+## Environment Variables
+- Frontend (`/web/.env`): `VITE_FIREBASE_*` keys (API key, auth domain, project ID, storage bucket, messaging sender ID, app ID, measurement ID).
+- Backend (`/api/.env`):
+  - Required: `DATABASE_URL`, `PORT`.
+  - Firebase Admin (for auth validation): `FIREBASE_PROJECT_ID`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`.
+  - AI/Queue: `OPENAI_API_KEY`, `REDIS_HOST`, `REDIS_PORT`.
+  - See `/api/.env.example` for full template.
+
+## UI System (web)
+- shadcn/ui + Radix primitives under `web/src/components/ui/`; variants with `class-variance-authority`; `cn()` from `@/lib/utils`; supports `asChild` Slot.
+- TailwindCSS 4 with CSS variables (light/dark) in `web/src/index.css`; dark mode toggled in Navbar using Radix Switch + localStorage.
+- Key primitives: button, badge, input, select, popover, calendar (react-day-picker), navigation-menu, switch.
+- Icons: Lucide (primary); Font Awesome is legacy.
+- Filters component (`web/src/components/Filters.tsx`): search, multi-selects, date range; typed props grouped by concern.
+
+## Coding Conventions
+- Strict TypeScript, 2-space indent, no default exports for React components. Path alias `@/` everywhere.
+- Components/services/hooks use PascalCase; repositories end with `Repository`; hooks prefixed with `use`.
+- Views remain dumb; remote calls live in repositories/services. Group props by concern in view components.
+- Error handling pattern: normalize unknown errors to messages; use `void` on floating promises when intentional.
+
+## Testing
+- Backend: Jest unit tests alongside sources; e2e under `/api/test`.
+- Frontend: Vitest + React Testing Library planned; place specs beside components/hooks. Mock network via MSW when needed.
+
+## Adding Features (frontend)
+1) Define types in `shared/models/`.  
+2) Add repository interface in `repositories/interfaces/`.  
+3) Implement repository (HTTP) and update `repositories/factory.ts`.  
+4) Register in `services/registry.ts` (respect init order).  
+5) Create hooks (`hooks/`) using services as params.  
+6) Build container in `routes/_authenticated/*` or feature folder; presentational view stays pure.
+
+## Gotchas / Reminders
+- Service registry ordering matters—never instantiate services manually.
+- All API calls require Firebase ID token (except `/health`); backend validates via Firebase Admin.
+- Audit logging auto-applies to mutations via decorator/interceptor.
+- Prisma client must be regenerated after schema changes: `npm run prisma:generate`.
+- AI endpoint is queue-backed; ensure Redis is running when exercising Phase 4 features.
