@@ -16,7 +16,9 @@ import { Filters } from '@/components/Filters';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { ConfirmActionModal } from '@/components/modals/ConfirmActionModal';
-import type { Transaction, TransactionType, CreateTransactionDto } from '@/lib/api/types';
+import { AiTransactionInput } from '@/components/ai/AiTransactionInput';
+import { ParsedTransactionPreview } from '@/components/ai/ParsedTransactionPreview';
+import type { Transaction, TransactionType, CreateTransactionDto, PaymentMethod, ParseTransactionResponse } from '@/lib/api/types';
 import { Badge } from '@/components/ui/badge';
 
 export const Route = createFileRoute('/_authenticated/financial')({
@@ -58,13 +60,18 @@ function FinancialRoute() {
 
   // UI State
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [aiResult, setAiResult] = useState<ParseTransactionResponse | null>(null);
   const [newTransaction, setNewTransaction] = useState<{
     type: TransactionType;
+    paymentMethod: PaymentMethod;
+    salesAgent: string;
     customerName: string;
     notes: string;
     items: { inventoryId: string; quantity: number }[];
   }>({
     type: 'SALE',
+    paymentMethod: 'CASH',
+    salesAgent: '',
     customerName: '',
     notes: '',
     items: [],
@@ -81,28 +88,81 @@ function FinancialRoute() {
     [transactionsData]
   );
 
+  // AI Handlers
+  const handleAiParseSuccess = (result: ParseTransactionResponse) => {
+    setAiResult(result);
+    // Prefill form with AI results
+    setNewTransaction({
+      type: result.type,
+      paymentMethod: result.paymentMethod,
+      salesAgent: result.salesAgent || '',
+      customerName: '',
+      notes: result.notes || '',
+      items: result.items.map((item) => ({
+        inventoryId: item.inventoryId,
+        quantity: item.quantity,
+      })),
+    });
+  };
+
+  const handleAiAccept = () => {
+    // Keep the prefilled data but hide the preview
+    setAiResult(null);
+  };
+
+  const handleAiReject = () => {
+    // Clear everything
+    setAiResult(null);
+    setNewTransaction({
+      type: newTransaction.type,
+      paymentMethod: 'CASH',
+      salesAgent: '',
+      customerName: '',
+      notes: '',
+      items: [],
+    });
+  };
+
+  const resetModal = () => {
+    addModal.close();
+    setAiResult(null);
+    setNewTransaction({
+      type: 'SALE',
+      paymentMethod: 'CASH',
+      salesAgent: '',
+      customerName: '',
+      notes: '',
+      items: [],
+    });
+  };
+
   // Handlers
   const handleCreateTransaction = async () => {
     if (newTransaction.items.length === 0) {
-      alert('Debe agregar al menos un artículo');
+      alert('Debe agregar al menos un articulo');
       return;
     }
 
     const dto: CreateTransactionDto = {
       type: newTransaction.type,
+      paymentMethod: newTransaction.paymentMethod,
+      salesAgent: newTransaction.salesAgent || undefined,
       customerName: newTransaction.customerName || undefined,
       notes: newTransaction.notes || undefined,
       items: newTransaction.items,
+      // Include AI metadata if this was an AI-parsed transaction
+      aiMetadata: aiResult
+        ? {
+            userPrompt: aiResult.originalPrompt,
+            aiResponse: aiResult.rawAiResponse,
+            confidence: aiResult.confidence,
+            processingTime: aiResult.processingTimeMs,
+          }
+        : undefined,
     };
 
     await createMutation.mutateAsync(dto);
-    addModal.close();
-    setNewTransaction({
-      type: 'SALE',
-      customerName: '',
-      notes: '',
-      items: [],
-    });
+    resetModal();
   };
 
   const handleDeleteTransaction = async () => {
@@ -216,121 +276,156 @@ function FinancialRoute() {
       {/* Add Transaction Modal */}
       {addModal.isOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg p-6 w-full max-w-md border border-border">
+          <div className="bg-card rounded-lg p-6 w-full max-w-lg border border-border max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">
               {newTransaction.type === 'SALE' ? 'Nueva Venta' : 'Nuevo Gasto'}
             </h3>
 
-            <div className="space-y-4">
-              {newTransaction.type === 'SALE' && (
+            {/* AI Input Section */}
+            {!aiResult && newTransaction.type === 'SALE' && (
+              <div className="mb-6 pb-6 border-b border-border">
+                <AiTransactionInput
+                  onParseSuccess={handleAiParseSuccess}
+                  onParseError={(error) => console.error('AI parse error:', error)}
+                />
+              </div>
+            )}
+
+            {/* AI Result Preview */}
+            {aiResult && (
+              <div className="mb-6">
+                <ParsedTransactionPreview
+                  result={aiResult}
+                  onAccept={handleAiAccept}
+                  onReject={handleAiReject}
+                />
+              </div>
+            )}
+
+            {/* Manual Form - shown when no AI result or after accepting */}
+            {!aiResult && (
+              <div className="space-y-4">
+                {/* Sales Agent */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Nombre del Cliente</label>
+                  <label className="block text-sm font-medium mb-1">Agente de Ventas</label>
                   <input
                     type="text"
                     className="w-full border border-border rounded px-3 py-2 bg-background"
-                    value={newTransaction.customerName}
+                    value={newTransaction.salesAgent}
                     onChange={(e) =>
-                      setNewTransaction((prev) => ({ ...prev, customerName: e.target.value }))
+                      setNewTransaction((prev) => ({ ...prev, salesAgent: e.target.value }))
                     }
-                    placeholder="Nombre del cliente"
+                    placeholder="Nombre del vendedor"
                   />
                 </div>
-              )}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Notas</label>
-                <textarea
-                  className="w-full border border-border rounded px-3 py-2 bg-background"
-                  value={newTransaction.notes}
-                  onChange={(e) =>
-                    setNewTransaction((prev) => ({ ...prev, notes: e.target.value }))
-                  }
-                  placeholder="Notas adicionales"
-                  rows={2}
-                />
-              </div>
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Metodo de Pago</label>
+                  <select
+                    className="w-full border border-border rounded px-3 py-2 bg-background"
+                    value={newTransaction.paymentMethod}
+                    onChange={(e) =>
+                      setNewTransaction((prev) => ({
+                        ...prev,
+                        paymentMethod: e.target.value as PaymentMethod,
+                      }))
+                    }
+                  >
+                    <option value="CASH">Efectivo</option>
+                    <option value="BANK_TRANSFER">Transferencia</option>
+                  </select>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Artículos</label>
-                {newTransaction.items.map((item, idx) => (
-                  <div key={idx} className="flex gap-2 mb-2">
-                    <select
-                      className="flex-1 border border-border rounded px-3 py-2 bg-background"
-                      value={item.inventoryId}
-                      onChange={(e) => {
-                        const newItems = [...newTransaction.items];
-                        newItems[idx].inventoryId = e.target.value;
-                        setNewTransaction((prev) => ({ ...prev, items: newItems }));
-                      }}
-                    >
-                      <option value="">Seleccionar artículo</option>
-                      {inventoryData?.data.map((inv) => (
-                        <option key={inv.id} value={inv.id}>
-                          {inv.item} ({inv.quality}) - {inv.quantity} disponibles
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      className="w-20 border border-border rounded px-3 py-2 bg-background"
-                      value={item.quantity}
-                      onChange={(e) => {
-                        const newItems = [...newTransaction.items];
-                        newItems[idx].quantity = parseInt(e.target.value) || 0;
-                        setNewTransaction((prev) => ({ ...prev, items: newItems }));
-                      }}
-                      min={1}
-                      placeholder="Cant."
-                    />
-                    <button
-                      type="button"
-                      className="px-2 text-destructive hover:text-destructive/80"
-                      onClick={() => {
-                        const newItems = newTransaction.items.filter((_, i) => i !== idx);
-                        setNewTransaction((prev) => ({ ...prev, items: newItems }));
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className="text-sm text-primary hover:underline"
-                  onClick={() =>
-                    setNewTransaction((prev) => ({
-                      ...prev,
-                      items: [...prev.items, { inventoryId: '', quantity: 1 }],
-                    }))
-                  }
-                >
-                  + Agregar artículo
-                </button>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Notas</label>
+                  <textarea
+                    className="w-full border border-border rounded px-3 py-2 bg-background"
+                    value={newTransaction.notes}
+                    onChange={(e) =>
+                      setNewTransaction((prev) => ({ ...prev, notes: e.target.value }))
+                    }
+                    placeholder="Notas adicionales"
+                    rows={2}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Articulos</label>
+                  {newTransaction.items.map((item, idx) => (
+                    <div key={idx} className="flex gap-2 mb-2">
+                      <select
+                        className="flex-1 border border-border rounded px-3 py-2 bg-background"
+                        value={item.inventoryId}
+                        onChange={(e) => {
+                          const newItems = [...newTransaction.items];
+                          newItems[idx].inventoryId = e.target.value;
+                          setNewTransaction((prev) => ({ ...prev, items: newItems }));
+                        }}
+                      >
+                        <option value="">Seleccionar articulo</option>
+                        {inventoryData?.data.map((inv) => (
+                          <option key={inv.id} value={inv.id}>
+                            {inv.item} ({inv.quality}) - {inv.quantity} disponibles
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        className="w-20 border border-border rounded px-3 py-2 bg-background"
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const newItems = [...newTransaction.items];
+                          newItems[idx].quantity = parseInt(e.target.value) || 0;
+                          setNewTransaction((prev) => ({ ...prev, items: newItems }));
+                        }}
+                        min={1}
+                        placeholder="Cant."
+                      />
+                      <button
+                        type="button"
+                        className="px-2 text-destructive hover:text-destructive/80"
+                        onClick={() => {
+                          const newItems = newTransaction.items.filter((_, i) => i !== idx);
+                          setNewTransaction((prev) => ({ ...prev, items: newItems }));
+                        }}
+                      >
+                        x
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="text-sm text-primary hover:underline"
+                    onClick={() =>
+                      setNewTransaction((prev) => ({
+                        ...prev,
+                        items: [...prev.items, { inventoryId: '', quantity: 1 }],
+                      }))
+                    }
+                  >
+                    + Agregar articulo
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex justify-end gap-2 mt-6">
               <button
                 className="px-4 py-2 border border-border rounded hover:bg-muted"
-                onClick={() => {
-                  addModal.close();
-                  setNewTransaction({
-                    type: 'SALE',
-                    customerName: '',
-                    notes: '',
-                    items: [],
-                  });
-                }}
+                onClick={resetModal}
               >
                 Cancelar
               </button>
-              <button
-                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-                onClick={handleCreateTransaction}
-                disabled={createMutation.isPending}
-              >
-                {createMutation.isPending ? 'Guardando...' : 'Guardar'}
-              </button>
+              {!aiResult && (
+                <button
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                  onClick={handleCreateTransaction}
+                  disabled={createMutation.isPending}
+                >
+                  {createMutation.isPending ? 'Guardando...' : 'Guardar'}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -375,8 +470,8 @@ function TransactionTable({ transactions, onDelete, onToggleMessage, formatCurre
     <table className="min-w-full border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
       <thead className="bg-muted">
         <tr>
-          <th className="px-4 py-2 text-left font-semibold text-primary">ID</th>
-          <th className="px-4 py-2 text-left font-semibold text-primary">Cliente/Notas</th>
+          <th className="px-4 py-2 text-left font-semibold text-primary">Agente</th>
+          <th className="px-4 py-2 text-left font-semibold text-primary">Pago</th>
           <th className="px-4 py-2 text-left font-semibold text-primary">Total</th>
           <th className="px-4 py-2 text-left font-semibold text-primary">Mensaje</th>
           <th className="px-4 py-2 text-left font-semibold text-primary">Fecha</th>
@@ -386,13 +481,17 @@ function TransactionTable({ transactions, onDelete, onToggleMessage, formatCurre
       <tbody>
         {transactions.map((transaction) => (
           <tr key={transaction.id} className="even:bg-muted/50">
-            <td className="px-4 py-2 font-mono text-sm">{transaction.id.slice(0, 8)}...</td>
-            <td className="px-4 py-2">{transaction.customerName || transaction.notes || '-'}</td>
+            <td className="px-4 py-2 capitalize">{transaction.salesAgent || '-'}</td>
+            <td className="px-4 py-2">
+              <Badge variant={transaction.paymentMethod === 'BANK_TRANSFER' ? 'default' : 'secondary'}>
+                {transaction.paymentMethod === 'BANK_TRANSFER' ? 'Transfer' : 'Efectivo'}
+              </Badge>
+            </td>
             <td className="px-4 py-2 font-semibold">{formatCurrency(transaction.totalAmount)}</td>
             <td className="px-4 py-2">
               <button onClick={() => onToggleMessage(transaction)}>
                 <Badge variant={transaction.messageSent ? 'default' : 'secondary'}>
-                  {transaction.messageSent ? 'Sí' : 'No'}
+                  {transaction.messageSent ? 'Si' : 'No'}
                 </Badge>
               </button>
             </td>

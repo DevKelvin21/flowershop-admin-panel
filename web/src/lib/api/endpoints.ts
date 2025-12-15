@@ -13,6 +13,8 @@ import type {
   PaginatedResponse,
   InventoryQueryParams,
   TransactionQueryParams,
+  ParseTransactionRequest,
+  ParseTransactionResponse,
 } from './types';
 
 function buildQueryString(params: Record<string, string | number | boolean | undefined | null>): string {
@@ -83,4 +85,10 @@ export const transactionsApi = {
 // Health check
 export const healthApi = {
   check: () => apiClient.get<{ status: string; timestamp: string }>('/health'),
+};
+
+// AI API
+export const aiApi = {
+  parseTransaction: (data: ParseTransactionRequest) =>
+    apiClient.post<ParseTransactionResponse>('/ai/parse-transaction', data),
 };

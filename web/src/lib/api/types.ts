@@ -44,11 +44,14 @@ export interface AddLossDto {
 
 // Transaction Types
 export type TransactionType = 'SALE' | 'EXPENSE';
+export type PaymentMethod = 'CASH' | 'BANK_TRANSFER';
 
 export interface Transaction {
   id: string;
   type: TransactionType;
   totalAmount: number;
+  paymentMethod: PaymentMethod;
+  salesAgent?: string;
   customerName?: string;
   notes?: string;
   messageSent: boolean;
@@ -68,17 +71,29 @@ export interface TransactionItem {
   inventory?: Pick<Inventory, 'item' | 'quality'>;
 }
 
+export interface AiMetadata {
+  userPrompt: string;
+  aiResponse: string;
+  confidence: number;
+  processingTime: number;
+}
+
 export interface CreateTransactionDto {
   type: TransactionType;
+  paymentMethod?: PaymentMethod;
+  salesAgent?: string;
   customerName?: string;
   notes?: string;
   items: {
     inventoryId: string;
     quantity: number;
   }[];
+  aiMetadata?: AiMetadata;
 }
 
 export interface UpdateTransactionDto {
+  paymentMethod?: PaymentMethod;
+  salesAgent?: string;
   customerName?: string;
   notes?: string;
   messageSent?: boolean;
@@ -132,4 +147,33 @@ export interface AuditLog {
   ipAddress?: string;
   userAgent?: string;
   timestamp: string;
+}
+
+// AI Types
+export interface ParsedItem {
+  inventoryId: string;
+  itemName: string;
+  quality: string;
+  quantity: number;
+  unitPrice: number;
+  availableQuantity: number;
+}
+
+export interface ParseTransactionRequest {
+  prompt: string;
+  language?: 'es' | 'en';
+}
+
+export interface ParseTransactionResponse {
+  type: TransactionType;
+  salesAgent?: string;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+  items: ParsedItem[];
+  totalAmount: number;
+  confidence: number;
+  suggestions?: string[];
+  processingTimeMs: number;
+  originalPrompt: string;
+  rawAiResponse: string;
 }
