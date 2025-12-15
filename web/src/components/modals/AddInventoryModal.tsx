@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { toast } from 'sonner';
 import type { NewInventoryItem } from '../../shared/models/inventory';
 import { INVENTORY_QUALITIES } from '../../shared/constants/inventory';
 
@@ -6,10 +7,9 @@ interface AddInventoryModalProps {
     open: boolean;
     onCancel: () => void;
     onConfirm: (item: NewInventoryItem) => void;
-    onError: (error: unknown) => void;
 }
 
-export function AddInventoryModal({ open, onCancel, onConfirm, onError }: AddInventoryModalProps) {
+export function AddInventoryModal({ open, onCancel, onConfirm }: AddInventoryModalProps) {
     const [formData, setFormData] = useState<NewInventoryItem>({
         item: '',
         quantity: 0,
@@ -19,13 +19,20 @@ export function AddInventoryModal({ open, onCancel, onConfirm, onError }: AddInv
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            await onConfirm(formData);
-            setFormData({ item: '', quantity: 0, quality: '', unitPrice: 0 });
-            onCancel();
-        } catch (err) {
-            onError(err);
+        if (!formData.item.trim()) {
+            toast.error('El nombre del articulo es requerido');
+            return;
         }
+        if (!formData.quality) {
+            toast.error('Selecciona una calidad');
+            return;
+        }
+        if (formData.unitPrice <= 0) {
+            toast.error('El precio unitario debe ser mayor a 0');
+            return;
+        }
+        await onConfirm(formData);
+        setFormData({ item: '', quantity: 0, quality: '', unitPrice: 0 });
     };
 
     if (!open) return null;

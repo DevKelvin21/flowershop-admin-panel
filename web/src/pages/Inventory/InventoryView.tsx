@@ -112,7 +112,6 @@ export function InventoryView({
         open={modals.isAddModalOpen}
         onCancel={modals.closeAddModal}
         onConfirm={modals.handleAddInventory}
-        onError={console.error}
       />
     </div>
   );

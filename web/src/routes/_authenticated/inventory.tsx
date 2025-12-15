@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
 import { authService } from '@/services';
@@ -55,11 +56,26 @@ function InventoryContainer() {
 
   // Command hooks with callbacks
   const commands = useInventoryCommands({
-    onAddSuccess: () => addItemModal.close(),
-    onUpdateSuccess: () => handleCancelConfirmModal(),
-    onDeleteSuccess: () => handleCancelConfirmModal(),
-    onLossSuccess: () => addLossModal.close(),
-    onError: console.error,
+    onAddSuccess: () => {
+      addItemModal.close();
+      toast.success('Articulo agregado al inventario');
+    },
+    onUpdateSuccess: () => {
+      handleCancelConfirmModal();
+      toast.success('Inventario actualizado');
+    },
+    onDeleteSuccess: () => {
+      handleCancelConfirmModal();
+      toast.success('Articulo eliminado del inventario');
+    },
+    onLossSuccess: () => {
+      addLossModal.close();
+      toast.success('Perdida registrada correctamente');
+    },
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error(message);
+    },
   });
 
   // Event handlers

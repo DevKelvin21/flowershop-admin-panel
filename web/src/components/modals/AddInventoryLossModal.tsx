@@ -1,15 +1,15 @@
-import { useState } from "react";
-import type { InventoryItem, InventoryLoss } from "../../shared/models/inventory";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import type { InventoryItem, InventoryLoss } from '../../shared/models/inventory';
 
 interface AddInventoryLossModalProps {
   inventoryOptions: InventoryItem[];
   open: boolean;
   onCancel: () => void;
   onConfirm: (loss: { inventoryId?: string; quantity: number; reason?: string; notes?: string }) => void;
-  onError: (error: unknown) => void;
 }
 
-export const AddInventoryLossModal = ({ inventoryOptions, open, onCancel, onConfirm, onError }: AddInventoryLossModalProps) => {
+export const AddInventoryLossModal = ({ inventoryOptions, open, onCancel, onConfirm }: AddInventoryLossModalProps) => {
   const [newLoss, setNewLoss] = useState<InventoryLoss>({
     inventoryId: '',
     item: '',
@@ -21,25 +21,28 @@ export const AddInventoryLossModal = ({ inventoryOptions, open, onCancel, onConf
 
   const handleSubmitInventoryLoss = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    try {
-      await onConfirm({
-        inventoryId: newLoss.inventoryId,
-        quantity: newLoss.quantity,
-        reason: newLoss.reason,
-        notes: newLoss.notes,
-      });
-      onCancel();
-      setNewLoss({
-        inventoryId: '',
-        item: '',
-        quality: '',
-        quantity: 0,
-        reason: 'loss',
-        timestamp: new Date().toISOString(),
-      });
-    } catch (err) {
-      onError(err);
+    if (!newLoss.inventoryId) {
+      toast.error('Selecciona un articulo de inventario');
+      return;
     }
+    if (newLoss.quantity <= 0) {
+      toast.error('La cantidad debe ser mayor a 0');
+      return;
+    }
+    await onConfirm({
+      inventoryId: newLoss.inventoryId,
+      quantity: newLoss.quantity,
+      reason: newLoss.reason,
+      notes: newLoss.notes,
+    });
+    setNewLoss({
+      inventoryId: '',
+      item: '',
+      quality: '',
+      quantity: 0,
+      reason: 'loss',
+      timestamp: new Date().toISOString(),
+    });
   };
 
   const handleCancel = () => {

@@ -165,7 +165,6 @@ export function InventoryPageView({
         open={modals.addItem.isOpen}
         onCancel={modals.addItem.onClose}
         onConfirm={modals.addItem.onSubmit}
-        onError={console.error}
       />
 
       {/* Add Loss Modal */}
@@ -174,7 +173,6 @@ export function InventoryPageView({
         open={modals.addLoss.isOpen}
         onCancel={modals.addLoss.onClose}
         onConfirm={modals.addLoss.onSubmit}
-        onError={console.error}
       />
 
       {/* Confirm Modal */}

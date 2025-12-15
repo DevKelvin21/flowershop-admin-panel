@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/components/theme-provider';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,36 +26,12 @@ const navItems = [
 ] as const;
 
 export function Navbar({ userEmail, onLogout }: NavbarProps) {
-    const [isDark, setIsDark] = useState(false);
+    const { resolvedTheme, setTheme } = useTheme();
     const location = useLocation();
-
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const root = document.documentElement;
-        const storedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const initialIsDark = storedTheme ? storedTheme === 'dark' : prefersDark;
-        setIsDark(initialIsDark);
-        root.classList.toggle('dark', initialIsDark);
-
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const handlePreferenceChange = (event: MediaQueryListEvent) => {
-            if (localStorage.getItem('theme')) return;
-            setIsDark(event.matches);
-            root.classList.toggle('dark', event.matches);
-        };
-        mediaQuery.addEventListener('change', handlePreferenceChange);
-
-        return () => {
-            mediaQuery.removeEventListener('change', handlePreferenceChange);
-        };
-    }, []);
+    const isDark = resolvedTheme === 'dark';
 
     const handleThemeToggle = (checked: boolean) => {
-        setIsDark(checked);
-        const root = document.documentElement;
-        root.classList.toggle('dark', checked);
-        localStorage.setItem('theme', checked ? 'dark' : 'light');
+        setTheme(checked ? 'dark' : 'light');
     };
 
     return (

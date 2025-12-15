@@ -100,7 +100,6 @@ export function LossInventoryView({
         open={modals.isAddModalOpen}
         onCancel={modals.closeAddModal}
         onConfirm={modals.handleAddLoss}
-        onError={console.error}
       />
     </div>
   );

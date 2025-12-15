@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
+import { toast } from 'sonner';
 import { authService } from '@/services';
 import {
   useTransactionList,
@@ -139,7 +140,7 @@ function FinancialRoute() {
   // Handlers
   const handleCreateTransaction = async () => {
     if (newTransaction.items.length === 0) {
-      alert('Debe agregar al menos un articulo');
+      toast.error('Debe agregar al menos un articulo');
       return;
     }
 
@@ -153,31 +154,49 @@ function FinancialRoute() {
       // Include AI metadata if this was an AI-parsed transaction
       aiMetadata: aiResult
         ? {
-            userPrompt: aiResult.originalPrompt,
-            aiResponse: aiResult.rawAiResponse,
-            confidence: aiResult.confidence,
-            processingTime: aiResult.processingTimeMs,
-          }
+          userPrompt: aiResult.originalPrompt,
+          aiResponse: aiResult.rawAiResponse,
+          confidence: aiResult.confidence,
+          processingTime: aiResult.processingTimeMs,
+        }
         : undefined,
     };
 
-    await createMutation.mutateAsync(dto);
-    resetModal();
+    try {
+      await createMutation.mutateAsync(dto);
+      toast.success(newTransaction.type === 'SALE' ? 'Venta registrada' : 'Gasto registrado');
+      resetModal();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al guardar transaccion';
+      toast.error(message);
+    }
   };
 
   const handleDeleteTransaction = async () => {
     if (selectedTransaction) {
-      await deleteMutation.mutateAsync(selectedTransaction.id);
-      confirmModal.close();
-      setSelectedTransaction(null);
+      try {
+        await deleteMutation.mutateAsync(selectedTransaction.id);
+        toast.success('Transaccion eliminada');
+        confirmModal.close();
+        setSelectedTransaction(null);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Error al eliminar transaccion';
+        toast.error(message);
+      }
     }
   };
 
   const handleToggleMessageSent = async (transaction: Transaction) => {
-    await updateMutation.mutateAsync({
-      id: transaction.id,
-      data: { messageSent: !transaction.messageSent },
-    });
+    try {
+      await updateMutation.mutateAsync({
+        id: transaction.id,
+        data: { messageSent: !transaction.messageSent },
+      });
+      toast.success(transaction.messageSent ? 'Mensaje desmarcado' : 'Mensaje marcado como enviado');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al actualizar';
+      toast.error(message);
+    }
   };
 
   const isLoading = transactionsLoading || summaryLoading;
@@ -286,7 +305,10 @@ function FinancialRoute() {
               <div className="mb-6 pb-6 border-b border-border">
                 <AiTransactionInput
                   onParseSuccess={handleAiParseSuccess}
-                  onParseError={(error) => console.error('AI parse error:', error)}
+                  onParseError={(error) => {
+                    const message = error instanceof Error ? error.message : 'Error al procesar con IA';
+                    toast.error(message);
+                  }}
                 />
               </div>
             )}
