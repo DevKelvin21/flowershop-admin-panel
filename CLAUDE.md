@@ -12,7 +12,7 @@ The project has **completed migration** from Firebase Backend-as-a-Service to a 
 
 ### 🚧 Current Migration Status
 
-**Phase 1, 2 & 3 Complete** (2025-12-05)
+**Phase 1, 2, 3 & 4 Complete** (2025-12-15)
 
 ✅ **Phase 1: Backend Foundation** - COMPLETE
 - PostgreSQL database with 6 models (Inventory, InventoryLoss, Transaction, TransactionItem, AiTransactionMetadata, AuditLog)
@@ -36,16 +36,25 @@ The project has **completed migration** from Firebase Backend-as-a-Service to a 
 - **UI Consolidation**: Losses merged into Inventory page as tabs
 - **Financial Module**: Connected to real API (no more mock data)
 
+✅ **Phase 4: AI Integration** - COMPLETE (2025-12-15)
+- **AI Module**: OpenAI GPT-4o-mini for natural language transaction parsing
+- **Synchronous Processing**: Direct API calls (no Redis/BullMQ queues)
+- **Inventory-Aware Prompts**: AI has context of all active inventory items
+- **Spanish Language Support**: Default language for prompts
+- **Confidence Scoring**: AI self-evaluates parsing confidence (0-1)
+- **Frontend Integration**: AI input component in financial modal
+
 **Current State**:
-- Backend API fully functional with 19 endpoints
+- Backend API fully functional with 20 endpoints (including AI)
 - Frontend connected to NestJS API via TanStack Query
 - Server: http://localhost:8000
 - Frontend: http://localhost:5173
 - Swagger docs: http://localhost:8000/api/docs
 - All endpoints protected with Firebase Auth (except /health)
 - Automatic audit logging on all mutations
+- AI-powered transaction parsing available
 
-**Next Phase**: Phase 4 - AI Integration (OpenAI + BullMQ)
+**Next Phase**: Phase 5 - Testing & Polish
 
 **Reference Documentation**:
 - `/MIGRATION_PLAN.md` - Complete modernization plan (6 phases)
@@ -105,44 +114,40 @@ npm run test:cov              # Test coverage
 
 The frontend follows **clean architecture** with strict separation of concerns:
 
-#### 1. Service Registry Pattern (CRITICAL)
+#### 1. Service Registry Pattern (Simplified)
 
 **Key File**: `/web/src/services/registry.ts`
 
-- **All singleton services are centralized here** with explicit dependency ordering:
-  1. Infrastructure (logging)
-  2. Authentication (depends on logging)
-  3. Repositories (data access)
-  4. Domain services (depends on repositories + logging)
+- **Singleton services for auth and logging only**:
+  1. Infrastructure (logging via HTTP service)
+  2. Authentication (Firebase auth service)
 
-**Rule**: Always import services from `../services` or `../services/registry`, NEVER instantiate directly.
+**Note**: The old repository pattern (`/repositories/`) has been removed. Data fetching is now handled entirely via TanStack Query hooks in `/hooks/queries/`.
 
 ```typescript
-// ✅ Correct
-import { inventoryService, authService } from '../services';
+// ✅ Correct - Auth service from registry
+import { authService } from '../services';
 
-// ❌ Wrong - creates duplicate instances
-import { InventoryService } from '../repositories/services/inventory.service';
-const inventoryService = new InventoryService(...);
+// ✅ Correct - Data via TanStack Query hooks
+import { useInventoryList, useCreateInventory } from '@/hooks/queries/inventory';
 ```
 
-#### 2. Repository Pattern
+#### 2. TanStack Query Data Layer (Primary)
 
-**Structure**:
-- `/repositories/interfaces/` - Repository contracts (e.g., `IInventoryRepository`)
-- `/repositories/firebase/` - Firebase implementations
-- `/repositories/factory.ts` - Factory functions that create repository instances
-- `/repositories/services/` - Domain services with business logic
+**Data fetching is now centralized in `/hooks/queries/`**:
+- `inventory.ts` - Inventory CRUD + losses
+- `transactions.ts` - Transactions CRUD + summary
+- `ai.ts` - AI transaction parsing
 
 **Dependency Flow**:
 ```
-Container → Hook → Service (business logic) → Repository (data access) → Backend
+Route Component → TanStack Query Hook → API Client → NestJS Backend
 ```
 
 **Key Insight**:
-- **Repositories** = Pure data access, no business logic
-- **Services** = Business logic, coordinate multiple repositories
-- Example: `InventoryService.addInventoryLoss()` validates inventory, updates inventory, adds loss record, AND logs the operation
+- **No more repository pattern** - TanStack Query handles caching, optimistic updates
+- **API client** at `/lib/api/endpoints.ts` handles HTTP calls
+- **Automatic Firebase token injection** via apiClient interceptor
 
 #### 3. TanStack Router File-Based Routing
 
@@ -268,15 +273,16 @@ c) **Filter/UI Hooks** (`useInventoryFilters`, `useModal`):
 - ✅ `ValidationPipe` - DTO validation with class-validator
 - ✅ Health check endpoint (`/api/v1/health`)
 
-**Modules** (4):
+**Modules** (5):
 1. **PrismaModule** - Database client (global)
 2. **AuditModule** - Audit logging (global, 2 endpoints)
 3. **InventoryModule** - Inventory management (9 endpoints)
 4. **TransactionsModule** - Financial transactions (7 endpoints)
+5. **AiModule** - AI-powered transaction parsing (1 endpoint)
 
-**Total Endpoints**: 19 (1 public, 18 protected)
+**Total Endpoints**: 20 (1 public, 19 protected)
 
-### API Endpoints (Phase 2 Complete)
+### API Endpoints
 
 **Base URL**: `http://localhost:8000/api/v1`
 **Swagger Docs**: `http://localhost:8000/api/docs`
@@ -287,6 +293,12 @@ c) **Filter/UI Hooks** (`useInventoryFilters`, `useModal`):
 #### Audit
 - `GET /audit` - List audit logs (paginated, filterable)
 - `GET /audit/entity/:type/:id` - Get logs for specific entity
+
+#### AI (1 endpoint)
+- `POST /ai/parse-transaction` - Parse natural language into transaction data
+  - Input: `{ prompt: string, language?: 'es' | 'en' }`
+  - Returns: Parsed transaction with items, totals, confidence score
+  - Uses GPT-4o-mini with inventory context
 
 #### Inventory (9 endpoints)
 - `POST /inventory` - Create inventory item [@AuditLog]
@@ -354,14 +366,10 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project.iam.gserviceaccount.com
 ```
 
-**Future** (Phase 4 - AI Integration):
+**AI Integration** (Required for AI features):
 ```env
 # OpenAI
 OPENAI_API_KEY=sk-...
-
-# Redis (for Bull queues)
-REDIS_HOST=localhost
-REDIS_PORT=6379
 ```
 
 See `/api/.env.example` for complete template.
@@ -382,7 +390,7 @@ See `/api/.env.example` for complete template.
    - Relation: inventory
 
 3. **Transaction** - Sales and expenses
-   - Fields: id, type (SALE/EXPENSE), totalAmount, customerName, notes, messageSent, createdBy, timestamps
+   - Fields: id, type (SALE/EXPENSE), totalAmount, paymentMethod (CASH/BANK_TRANSFER), salesAgent, customerName, notes, messageSent, createdBy, timestamps
    - Relations: items[], aiMetadata?
 
 4. **TransactionItem** - Line items
@@ -397,16 +405,19 @@ See `/api/.env.example` for complete template.
    - Fields: id, userId, action, entityType, entityId, changes (JSON), ipAddress, userAgent, timestamp
    - Indexes: `(userId, timestamp)`, `(entityType, entityId)`
 
-### Legacy Firebase Models (Frontend - Phase 3 Migration)
+### Enums
 
-**Frontend still uses Firebase** (until Phase 3):
-- `inventory` collection - Inventory items
-- `losses` collection - Inventory loss records
-- Document IDs: `${item}_${quality}` (e.g., "Rose_Premium")
+```prisma
+enum TransactionType {
+  SALE
+  EXPENSE
+}
 
-**External Logging** (legacy, to be replaced):
-- Cloud Function: `https://cf-flowershop-logs-hanlder-265978683065.us-central1.run.app/log_operation`
-- Now replaced by AuditLog table in PostgreSQL
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+}
+```
 
 ## Code Style & Conventions
 
@@ -450,13 +461,24 @@ interface FiltersProps {
 
 ### Error Handling
 
-Consistent pattern across codebase:
+Use toast notifications for user-facing errors:
 ```typescript
-catch (error: unknown) {
-  const errorMessage = error instanceof Error
-    ? error.message
-    : 'Fallback message';
-  setError(errorMessage);
+import { toast } from 'sonner';
+
+try {
+  await mutation.mutateAsync(data);
+  toast.success('Operacion exitosa');
+} catch (error) {
+  const message = error instanceof Error ? error.message : 'Error desconocido';
+  toast.error(message);
+}
+```
+
+For form validation errors in modals:
+```typescript
+if (!formData.item.trim()) {
+  toast.error('El nombre del articulo es requerido');
+  return;
 }
 ```
 
@@ -490,6 +512,13 @@ The project uses **shadcn/ui** components built on Radix UI primitives. Configur
 - `calendar.tsx` - Date picker using react-day-picker
 - `navigation-menu.tsx` - Radix Navigation Menu for navbar
 - `switch.tsx` - Toggle switch for theme/settings
+- `sonner.tsx` - Toast notifications (uses Sonner library)
+- `tabs.tsx` - Radix Tabs for tabbed interfaces
+
+**Custom Components** (in `/web/src/components/`):
+- `theme-provider.tsx` - Theme context provider (light/dark/system)
+- `ai/AiTransactionInput.tsx` - AI natural language input for transactions
+- `ai/ParsedTransactionPreview.tsx` - Preview of AI-parsed transaction data
 
 ### Theming & Styling
 
@@ -510,11 +539,38 @@ The project uses **shadcn/ui** components built on Radix UI primitives. Configur
 
 ### Dark Mode Implementation
 
-The `Navbar` component manages theme state:
-- Reads system preference on mount
-- Persists choice to localStorage
-- Uses Radix Switch component for toggle
+**ThemeProvider** (`/web/src/components/theme-provider.tsx`) manages global theme state:
+- Wrapped at app root in `main.tsx`
+- Supports `light`, `dark`, and `system` themes
+- Persists choice to localStorage (key: `theme`)
+- Syncs with system preference when set to `system`
 - Theme applied via `.dark` class on root element
+
+```typescript
+// Usage in components
+import { useTheme } from '@/components/theme-provider';
+
+const { theme, setTheme, resolvedTheme } = useTheme();
+// theme: 'light' | 'dark' | 'system'
+// resolvedTheme: 'light' | 'dark' (actual applied theme)
+```
+
+### Toast Notifications
+
+**Sonner** library provides toast notifications:
+- Configured in `main.tsx` with `<Toaster richColors position="bottom-right" />`
+- Theme-aware (syncs with ThemeProvider via `resolvedTheme`)
+- Used for all user feedback (success, error, validation)
+
+```typescript
+import { toast } from 'sonner';
+
+// Success
+toast.success('Articulo agregado al inventario');
+
+// Error
+toast.error('El precio unitario es requerido');
+```
 
 ### Enhanced Filters Component
 
@@ -564,20 +620,21 @@ A reusable, type-safe filter component with support for:
 
 **UI Framework**:
 - `react@19.1.0` + `react-dom@19.1.0` - React 19
-- `react-router@7.9.5` + `react-router-dom@7.9.5` - Client-side routing
+- `@tanstack/react-router` - File-based routing with type safety
+- `@tanstack/react-query` - Data fetching, caching, mutations
 
 **UI Components & Styling**:
-- `@radix-ui/*` - Headless UI primitives (select, popover, switch, navigation-menu, slot)
+- `@radix-ui/*` - Headless UI primitives (select, popover, switch, navigation-menu, slot, tabs)
 - `tailwindcss@4.1.17` + `@tailwindcss/vite@4.1.17` - TailwindCSS 4 with Vite plugin
 - `tailwindcss-animate@1.0.7` - Animation utilities
 - `class-variance-authority@0.7.1` - Variant management for components
 - `clsx@2.1.1` + `tailwind-merge@3.3.1` - Conditional class merging
 - `lucide-react@0.552.0` - Icon library (primary)
-- `@fortawesome/*` - Font Awesome icons (legacy)
+- `sonner` - Toast notifications
 - `react-day-picker@9.5.0` - Calendar/date picker
 
 **Backend/Data**:
-- `firebase@11.8.1` - Firebase SDK (auth + Firestore)
+- `firebase@11.8.1` - Firebase SDK (auth only, Firestore no longer used)
 
 **Build Tools**:
 - `vite@6.3.5` - Build tool and dev server
@@ -585,18 +642,38 @@ A reusable, type-safe filter component with support for:
 - `@vitejs/plugin-react@4.4.1` - React plugin for Vite
 - `eslint@9.25.0` + `typescript-eslint@8.30.1` - Linting
 
+### Backend (`/api`)
+
+**Framework**:
+- `@nestjs/core` + `@nestjs/common` - NestJS framework
+- `@nestjs/swagger` - API documentation
+
+**Database**:
+- `@prisma/client` + `prisma` - PostgreSQL ORM
+
+**AI Integration**:
+- `openai` - OpenAI SDK for GPT-4o-mini
+
+**Authentication**:
+- `firebase-admin` - Server-side Firebase token validation
+
 ## Adding New Features
 
-Follow this workflow:
+### Frontend Workflow
 
-1. **Define Types** in `/web/src/shared/models/`
-2. **Create Repository Interface** in `/repositories/interfaces/`
-3. **Implement Repository** in `/repositories/firebase/`
-4. **Create Factory Function** in `/repositories/factory.ts`
-5. **Register in Service Registry** in `/services/registry.ts` (mind initialization order!)
-6. **Create Custom Hook** in `/hooks/`
-7. **Build Container Component** in `/pages/*/`
-8. **Build View Component** in `/pages/*/`
+1. **Define API Types** in `/web/src/lib/api/types.ts`
+2. **Add API Endpoint** in `/web/src/lib/api/endpoints.ts`
+3. **Create TanStack Query Hook** in `/web/src/hooks/queries/`
+4. **Build Route Component** in `/web/src/routes/_authenticated/`
+5. **Build View Component** in `/web/src/pages/*/` (optional, for complex UIs)
+
+### Backend Workflow
+
+1. **Define DTOs** in `/api/src/modules/[module]/dto/`
+2. **Create/Update Service** in `/api/src/modules/[module]/[module].service.ts`
+3. **Add Controller Endpoint** in `/api/src/modules/[module]/[module].controller.ts`
+4. **Update Prisma Schema** if needed in `/api/prisma/schema.prisma`
+5. **Run Migration** with `npm run prisma:migrate`
 
 ## Testing (Not Yet Implemented)
 
@@ -635,20 +712,28 @@ The Repository pattern, Service interfaces, and factory functions are specifical
 
 ### Backend (NestJS API)
 1. **PostgreSQL must be running** - Start with `brew services start postgresql@14`
-2. **Environment variables required** - See `/api/.env.example`
+2. **Environment variables required** - See `/api/.env.example` (including `OPENAI_API_KEY` for AI)
 3. **Firebase Auth optional** - API works without Firebase config (warns on startup)
 4. **Prisma Client generation** - Run `npm run prisma:generate` after schema changes
 5. **@AuditLog decorator** - Auto-logs mutations to AuditLog table
 6. **Database transactions** - Use `prisma.$transaction()` for atomic operations
 
 ### Frontend (React)
-1. **Service initialization order matters** - see comments in `registry.ts`
-2. **Always use named exports** - no default exports
-3. **Firebase composite IDs** - format: `${item}_${quality}` (legacy, will change in Phase 3)
-4. **Frontend still uses Firebase** - Migration to NestJS API pending (Phase 3)
+1. **Always use named exports** - no default exports
+2. **Use TanStack Query hooks** for all data fetching (no direct API calls in components)
+3. **Toast notifications** - Use `toast.success()` / `toast.error()` from sonner for user feedback
+4. **Theme context** - Use `useTheme()` from `@/components/theme-provider` for theme access
 5. **Props grouped by concern** in Views (`filters`, `table`, `modals`)
 
-### Migration Status
-- ✅ Backend API ready (PostgreSQL + NestJS)
-- ⏳ Frontend still on Firebase (Phase 3 will migrate to API)
-- ⏳ Transaction financial module uses mock data (Phase 3 will connect to API)
+### AI Integration
+1. **Prompt format**: `[quantity] [product] total $[amount] [payment_method?] [agent_name]`
+2. **Payment method**: `transferencia` = BANK_TRANSFER, otherwise defaults to CASH
+3. **Sales agent**: Extracted from END of prompt (e.g., "...mila" → salesAgent: "mila")
+4. **Confidence threshold**: Show suggestions when confidence < 0.7
+
+### Migration Status (All Complete)
+- ✅ Backend API ready (PostgreSQL + NestJS + AI)
+- ✅ Frontend connected to API (TanStack Query)
+- ✅ AI-powered transaction parsing
+- ✅ Toast notifications for user feedback
+- ✅ Theme provider with dark mode support
