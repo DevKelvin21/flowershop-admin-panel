@@ -74,6 +74,8 @@ export class TransactionsService {
         data: {
           type: dto.type,
           totalAmount,
+          paymentMethod: dto.paymentMethod || 'CASH',
+          salesAgent: dto.salesAgent,
           customerName: dto.customerName,
           notes: dto.notes,
           createdBy: userId,
@@ -95,6 +97,19 @@ export class TransactionsService {
           },
         },
       });
+
+      // Store AI metadata if provided
+      if (dto.aiMetadata) {
+        await tx.aiTransactionMetadata.create({
+          data: {
+            transactionId: transaction.id,
+            userPrompt: dto.aiMetadata.userPrompt,
+            aiResponse: dto.aiMetadata.aiResponse,
+            confidence: dto.aiMetadata.confidence,
+            processingTime: dto.aiMetadata.processingTime,
+          },
+        });
+      }
 
       // Update inventory quantities
       for (const item of dto.items) {
@@ -206,6 +221,8 @@ export class TransactionsService {
     return this.prisma.transaction.update({
       where: { id },
       data: {
+        paymentMethod: dto.paymentMethod,
+        salesAgent: dto.salesAgent,
         customerName: dto.customerName,
         notes: dto.notes,
         messageSent: dto.messageSent,

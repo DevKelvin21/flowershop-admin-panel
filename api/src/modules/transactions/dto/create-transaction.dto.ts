@@ -9,9 +9,11 @@ import {
   ValidateNested,
   ArrayMinSize,
   MinLength,
+  Min,
+  Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TransactionType } from '@prisma/client';
+import { TransactionType, PaymentMethod } from '@prisma/client';
 
 export class TransactionItemDto {
   @ApiProperty({
@@ -33,6 +35,39 @@ export class TransactionItemDto {
   quantity: number;
 }
 
+export class AiMetadataDto {
+  @ApiProperty({
+    description: 'Original user prompt',
+    example: '1 ramo 12 rosas total $20.00 mila',
+  })
+  @IsString()
+  userPrompt: string;
+
+  @ApiProperty({
+    description: 'Raw AI response',
+  })
+  @IsString()
+  aiResponse: string;
+
+  @ApiProperty({
+    description: 'AI confidence score (0-1)',
+    example: 0.95,
+  })
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  @Type(() => Number)
+  confidence: number;
+
+  @ApiProperty({
+    description: 'Processing time in milliseconds',
+    example: 1200,
+  })
+  @IsNumber()
+  @Type(() => Number)
+  processingTime: number;
+}
+
 export class CreateTransactionDto {
   @ApiProperty({
     description: 'Transaction type',
@@ -43,7 +78,25 @@ export class CreateTransactionDto {
   type: TransactionType;
 
   @ApiPropertyOptional({
-    description: 'Customer name (for sales)',
+    description: 'Payment method',
+    enum: PaymentMethod,
+    example: 'CASH',
+    default: 'CASH',
+  })
+  @IsOptional()
+  @IsEnum(PaymentMethod)
+  paymentMethod?: PaymentMethod;
+
+  @ApiPropertyOptional({
+    description: 'Sales agent name',
+    example: 'mila',
+  })
+  @IsOptional()
+  @IsString()
+  salesAgent?: string;
+
+  @ApiPropertyOptional({
+    description: 'Customer name (legacy field)',
     example: 'Maria Garcia',
   })
   @IsOptional()
@@ -71,4 +124,13 @@ export class CreateTransactionDto {
   @ValidateNested({ each: true })
   @Type(() => TransactionItemDto)
   items: TransactionItemDto[];
+
+  @ApiPropertyOptional({
+    description: 'AI metadata if transaction was parsed by AI',
+    type: AiMetadataDto,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => AiMetadataDto)
+  aiMetadata?: AiMetadataDto;
 }

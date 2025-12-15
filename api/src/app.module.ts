@@ -8,6 +8,7 @@ import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor
 import { AuditModule } from './modules/audit/audit.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
+import { AiModule } from './modules/ai/ai.module';
 import { initializeFirebase } from './config/firebase.config';
 
 // Initialize Firebase on module load
@@ -19,6 +20,7 @@ initializeFirebase();
     AuditModule,
     InventoryModule,
     TransactionsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [

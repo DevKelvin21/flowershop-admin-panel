@@ -49,7 +49,9 @@ model Transaction {
   id              String            @id @default(cuid())
   type            TransactionType   // SALE or EXPENSE
   totalAmount     Decimal           @db.Decimal(10, 2)
-  customerName    String?           // For sales
+  customerName    String?           // Legacy field, kept for backwards compatibility
+  salesAgent      String?           // Name of sales agent (e.g., "mila")
+  paymentMethod   PaymentMethod     @default(CASH)
   notes           String?
   messageSent     Boolean           @default(false) // WhatsApp/SMS confirmation
   createdBy       String            // user email
@@ -65,6 +67,11 @@ model Transaction {
 enum TransactionType {
   SALE
   EXPENSE
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
 }
 
 model TransactionItem {
