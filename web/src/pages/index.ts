@@ -3,7 +3,5 @@ export * from './Dashboard/DashboardView';
 export * from './Inventory/InventoryView';
 export * from './Inventory/InventoryPageView';
 export * from './LossInventory/LossInventoryView';
-export * from './Financial/SalesView';
-export * from './Financial/ExpensesView';
-export * from './Financial/SummaryView';
+export * from './Financial/FinancialView';
 export * from './Login/LoginView';
