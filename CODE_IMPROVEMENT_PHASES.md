@@ -27,9 +27,9 @@ Skills applied for this roadmap:
 | 2 | Financial Module Composition Refactor | Completed | Compound modal + context + row-click detail shipped |
 | 3 | Synchronous AI Resilience and Cost Controls | Completed | Timeout/retry/fallback + draft autosave + cost caps |
 | 4 | Query and Data Layer Tightening | Completed | Query key normalization, targeted invalidation, prefetch, analytics type alignment |
-| 5 | Frontend Design Polish | Pending | Distinctive, coherent UI refresh |
-| 6 | Performance and Bundle Reduction | Pending | Reduce JS/CSS payload and heavy assets |
-| 7 | Documentation and Phase Closure | Pending | Align docs with actual architecture |
+| 5 | Frontend Design Polish | Completed | Refined visual hierarchy, responsive controls, and motion polish |
+| 6 | Performance and Bundle Reduction | Completed | Route-level lazy loading and major asset-path bundle reduction |
+| 7 | Documentation and Phase Closure | Completed | README docs aligned to current FE/BE architecture |
 
 ---
 
@@ -140,11 +140,11 @@ Pattern source: `frontend-design`
 - Deliver a coherent and distinctive UI polish, not generic defaults.
 
 ### Tasks
-- [ ] Define visual direction (typography, palette, motion, spacing system).
-- [ ] Improve information hierarchy in Inventory and Financial screens.
-- [ ] Refine tables, filters, and modals for readability and mobile behavior.
-- [ ] Add meaningful animation moments (load transitions, staged reveals where appropriate).
-- [ ] Ensure accessibility basics (focus states, contrast, keyboard reachability).
+- [x] Define visual direction (typography, palette, motion, spacing system).
+- [x] Improve information hierarchy in Inventory and Financial screens.
+- [x] Refine tables, filters, and modals for readability and mobile behavior.
+- [x] Add meaningful animation moments (load transitions, staged reveals where appropriate).
+- [x] Ensure accessibility basics (focus states, contrast, keyboard reachability).
 
 ### Exit Criteria
 - Desktop and mobile views feel intentional and consistent.
@@ -157,10 +157,10 @@ Pattern source: `frontend-design`
 - Reduce payload and improve runtime responsiveness.
 
 ### Tasks
-- [ ] Implement route/component lazy loading where it reduces main bundle.
-- [ ] Remove unused dependencies and dead components.
-- [ ] Optimize large static assets (notably logo size/format strategy).
-- [ ] Re-check Vite output for chunk warnings and resolve largest offenders.
+- [x] Implement route/component lazy loading where it reduces main bundle.
+- [x] Remove unused dependencies and dead components.
+- [x] Optimize large static assets (notably logo size/format strategy).
+- [x] Re-check Vite output for chunk warnings and resolve largest offenders.
 
 ### Exit Criteria
 - Main bundle and critical path assets are reduced.
@@ -173,10 +173,10 @@ Pattern source: `frontend-design`
 - Keep docs aligned with real code after changes.
 
 ### Tasks
-- [ ] Update root README, `/web/README.md`, and `/api/README.md` to current architecture.
-- [ ] Remove outdated migration status text that conflicts with implementation.
-- [ ] Add short developer runbook for local validation and common failures.
-- [ ] Summarize completed phases with links to PRs/commits.
+- [x] Update root README, `/web/README.md`, and `/api/README.md` to current architecture.
+- [x] Remove outdated migration status text that conflicts with implementation.
+- [x] Add short developer runbook for local validation and common failures.
+- [x] Summarize completed phases with links to PRs/commits.
 
 ### Exit Criteria
 - Documentation reflects actual FE/BE architecture and commands.
@@ -357,3 +357,67 @@ Copy this template and append an entry under "Phase Change Log".
   - `api npm run test:e2e`: pass
 - Risks / Follow-ups:
   - Prefetch loaders use `Promise.allSettled` to avoid navigation failures; cache warm-up is best-effort under poor network conditions.
+
+### Phase 5 - Frontend Design Polish
+- Status: Completed
+- Date: 2026-02-16
+- Summary:
+  - Refined visual hierarchy for authenticated layout with branded header treatment and better section framing.
+  - Improved readability and responsive behavior of Inventory/Financial pages (headers, controls, tables, summary cards).
+  - Added subtle ambient grid/background and entry animation for stronger visual coherence without workflow regressions.
+  - Updated modal/table/filter styling for improved clarity and touch/mouse usability.
+- Files changed:
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/routes/_authenticated.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/components/Navbar.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/components/Filters.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/components/EditableTable.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Inventory/InventoryPageView.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/FinancialView.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/SummaryCards.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionModal.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Dashboard/DashboardView.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/index.css
+- Validation:
+  - `web npm run lint`: pass (warnings only, unchanged baseline 4 warnings)
+  - `web npm run build`: pass
+- Risks / Follow-ups:
+  - The authenticated shell remains layout-first (not a full design-system rebuild); deeper token-level UI unification can be a future pass.
+
+### Phase 6 - Performance and Bundle Reduction
+- Status: Completed
+- Date: 2026-02-16
+- Summary:
+  - Added lazy route components for heavy authenticated pages (Inventory, Financial, Dashboard).
+  - Moved Inventory container logic out of route file to enable route-level code splitting.
+  - Removed the heavy header logo asset from runtime import path and replaced it with lightweight icon branding.
+  - Verified Vite output after changes: main JS chunk reduced from ~1,035 kB to ~758 kB (before gzip).
+- Files changed:
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/routes/_authenticated/index.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/routes/_authenticated/inventory.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/routes/_authenticated/financial.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Inventory/InventoryContainer.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Dashboard/DashboardRoute.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/routes/_authenticated.tsx
+- Validation:
+  - `web npm run build`: pass
+  - bundle inspection: improved chunk split with route bundles (`FinancialContainer`, `InventoryContainer`, `DashboardRoute`)
+- Risks / Follow-ups:
+  - A large shared chunk still remains; deeper manual chunking can be done later if startup metrics require it.
+
+### Phase 7 - Documentation and Phase Closure
+- Status: Completed
+- Date: 2026-02-16
+- Summary:
+  - Rewrote root, frontend, and backend READMEs to match the current architecture (PostgreSQL + Nest API + Firebase auth tokens).
+  - Removed outdated migration text and old Firebase/SQLite assumptions.
+  - Added concise local runbooks, env requirements, validation commands, and API behavior notes.
+  - Updated this roadmap to reflect completion through Phase 7.
+- Files changed:
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/README.md
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/README.md
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/README.md
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+- Validation:
+  - manual documentation consistency review: done
+- Risks / Follow-ups:
+  - Keep docs updated alongside future feature phases to avoid drift.
