@@ -13,11 +13,11 @@ export class ParseTransactionDto {
     example:
       '1 ramo 12 rosas perlas y mariposas total $20.00 transferencia mila',
     minLength: 3,
-    maxLength: 1000,
+    maxLength: 600,
   })
   @IsString()
   @MinLength(3, { message: 'El prompt debe tener al menos 3 caracteres' })
-  @MaxLength(1000, { message: 'El prompt no puede exceder 1000 caracteres' })
+  @MaxLength(600, { message: 'El prompt no puede exceder 600 caracteres' })
   prompt: string;
 
   @ApiPropertyOptional({

@@ -33,7 +33,8 @@ export class AiController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Transaction parsed successfully',
+    description:
+      'Transaction parsed successfully (OpenAI primary parser or fallback parser)',
     type: ParseTransactionResponseDto,
   })
   @ApiResponse({
@@ -42,7 +43,8 @@ export class AiController {
   })
   @ApiResponse({
     status: 503,
-    description: 'AI service unavailable (OPENAI_API_KEY not configured)',
+    description:
+      'AI parsing unavailable (both OpenAI and fallback parser failed unexpectedly)',
   })
   async parseTransaction(
     @Body() dto: ParseTransactionDto,
