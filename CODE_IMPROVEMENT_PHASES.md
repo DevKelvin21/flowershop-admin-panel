@@ -26,7 +26,7 @@ Skills applied for this roadmap:
 | 1 | Quality Gate Recovery | Completed | Lint/build/tests now pass for FE+BE |
 | 2 | Financial Module Composition Refactor | Completed | Compound modal + context + row-click detail shipped |
 | 3 | Synchronous AI Resilience and Cost Controls | Completed | Timeout/retry/fallback + draft autosave + cost caps |
-| 4 | Query and Data Layer Tightening | Pending | Cache and invalidation consistency |
+| 4 | Query and Data Layer Tightening | Completed | Query key normalization, targeted invalidation, prefetch, analytics type alignment |
 | 5 | Frontend Design Polish | Pending | Distinctive, coherent UI refresh |
 | 6 | Performance and Bundle Reduction | Pending | Reduce JS/CSS payload and heavy assets |
 | 7 | Documentation and Phase Closure | Pending | Align docs with actual architecture |
@@ -121,11 +121,11 @@ Pattern source: `vercel-composition-patterns`
 - Improve consistency and reduce unnecessary requests.
 
 ### Tasks
-- [ ] Standardize query key usage and invalidations across inventory/transactions.
-- [ ] Review stale times by volatility (inventory vs transaction list vs summary).
-- [ ] Add selective prefetching for likely next routes/views.
-- [ ] Fix type mismatch between analytics API response (`amount`) and frontend contract (`total`).
-- [ ] Ensure optimistic updates rollback cleanly on failure.
+- [x] Standardize query key usage and invalidations across inventory/transactions.
+- [x] Review stale times by volatility (inventory vs transaction list vs summary).
+- [x] Add selective prefetching for likely next routes/views.
+- [x] Fix type mismatch between analytics API response (`amount`) and frontend contract (`total`).
+- [x] Ensure optimistic updates rollback cleanly on failure.
 
 ### Exit Criteria
 - No stale/incorrect UI after mutations.
@@ -326,3 +326,34 @@ Copy this template and append an entry under "Phase Change Log".
 - Risks / Follow-ups:
   - Fallback parser is intentionally conservative and may require manual adjustment for ambiguous prompts.
   - AI dedupe/cache is in-memory (single instance); persistent/shared cache is out of scope for current single-user architecture.
+
+### Phase 4 - Query and Data Layer Tightening
+- Status: Completed
+- Date: 2026-02-16
+- Summary:
+  - Standardized inventory/transaction query keys with normalized params and explicit key roots for stable targeted invalidation.
+  - Tuned stale times by data volatility (transactions/summary fresher than analytics, inventory lists/details fresher than long-lived cache).
+  - Added route-level selective prefetch for Financial and Inventory using TanStack Router loaders + `ensureQueryData`.
+  - Fixed analytics contract mismatch by returning `total` per day from backend and adding frontend normalization for legacy `amount`.
+  - Strengthened optimistic updates with detail-query snapshots and rollback restore paths for update/delete flows.
+- Files changed:
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/hooks/queries/query-key-utils.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/hooks/queries/transactions.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/hooks/queries/inventory.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/utils/dateRange.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/hooks/useFinancialFilters.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/routes/_authenticated/financial.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/routes/_authenticated/inventory.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/lib/api/endpoints.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/transactions/transactions.service.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/transactions/transactions.controller.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+- Validation:
+  - `web npm run lint`: pass (warnings only, unchanged baseline 4 warnings)
+  - `web npm run build`: pass
+  - `api npm run lint`: pass
+  - `api npm run build`: pass
+  - `api npm run test -- --runInBand`: pass
+  - `api npm run test:e2e`: pass
+- Risks / Follow-ups:
+  - Prefetch loaders use `Promise.allSettled` to avoid navigation failures; cache warm-up is best-effort under poor network conditions.
