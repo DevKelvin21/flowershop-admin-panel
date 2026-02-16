@@ -5,7 +5,6 @@ import {
   IsPositive,
   Min,
   MinLength,
-  IsDecimal,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 

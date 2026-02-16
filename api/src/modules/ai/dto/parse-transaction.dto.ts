@@ -1,10 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, MinLength, MaxLength, IsOptional, IsIn } from 'class-validator';
+import {
+  IsString,
+  MinLength,
+  MaxLength,
+  IsOptional,
+  IsIn,
+} from 'class-validator';
 
 export class ParseTransactionDto {
   @ApiProperty({
     description: 'Natural language input describing the transaction',
-    example: '1 ramo 12 rosas perlas y mariposas total $20.00 transferencia mila',
+    example:
+      '1 ramo 12 rosas perlas y mariposas total $20.00 transferencia mila',
     minLength: 3,
     maxLength: 1000,
   })

@@ -7,7 +7,14 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { getFirebaseAuth, isFirebaseInitialized } from '../../config/firebase.config';
+import {
+  getFirebaseAuth,
+  isFirebaseInitialized,
+} from '../../config/firebase.config';
+import type {
+  AuthenticatedRequest,
+  FirebaseUser,
+} from '../decorators/current-user.decorator';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 
@@ -34,18 +41,18 @@ export class FirebaseAuthGuard implements CanActivate {
         'Firebase not initialized - BYPASSING AUTH (development mode only!)',
       );
       // Attach mock user for development
-      const request = context.switchToHttp().getRequest<Request>();
-      (request as any).user = {
+      const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+      request.user = {
         uid: 'dev-user',
         email: 'dev@localhost',
         emailVerified: true,
         name: 'Development User',
-        picture: null,
+        picture: undefined,
       };
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
@@ -57,26 +64,37 @@ export class FirebaseAuthGuard implements CanActivate {
       if (!auth) {
         throw new UnauthorizedException('Firebase Auth not available');
       }
-      const decodedToken = await auth.verifyIdToken(token);
+      const decodedToken = (await auth.verifyIdToken(token)) as {
+        uid: string;
+        email?: string;
+        email_verified?: boolean;
+        name?: string;
+        picture?: string;
+      };
 
       // Attach user info to request object
-      (request as any).user = {
+      request.user = {
         uid: decodedToken.uid,
         email: decodedToken.email,
         emailVerified: decodedToken.email_verified,
         name: decodedToken.name,
         picture: decodedToken.picture,
-      };
+      } satisfies FirebaseUser;
 
       return true;
-    } catch (error) {
-      this.logger.error('Token verification failed:', error);
+    } catch (error: unknown) {
+      this.logger.error(
+        'Token verification failed',
+        error instanceof Error ? error.stack : undefined,
+      );
 
-      if (error.code === 'auth/id-token-expired') {
+      const code = this.getFirebaseErrorCode(error);
+
+      if (code === 'auth/id-token-expired') {
         throw new UnauthorizedException('Authentication token has expired');
       }
 
-      if (error.code === 'auth/argument-error') {
+      if (code === 'auth/argument-error') {
         throw new UnauthorizedException('Invalid authentication token format');
       }
 
@@ -94,5 +112,17 @@ export class FirebaseAuthGuard implements CanActivate {
     const [type, token] = authHeader.split(' ');
 
     return type === 'Bearer' ? token : undefined;
+  }
+
+  private getFirebaseErrorCode(error: unknown): string | undefined {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      typeof error.code === 'string'
+    ) {
+      return error.code;
+    }
+    return undefined;
   }
 }

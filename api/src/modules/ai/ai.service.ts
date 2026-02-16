@@ -12,6 +12,14 @@ import {
 } from './dto/parse-transaction-response.dto';
 import { TransactionType, PaymentMethod } from '@prisma/client';
 
+interface InventoryContextItem {
+  id: string;
+  item: string;
+  quality: string;
+  quantity: number;
+  unitPrice: { toString(): string };
+}
+
 interface AiParsedResult {
   type: 'SALE' | 'EXPENSE';
   salesAgent?: string;
@@ -51,10 +59,11 @@ export class AiService {
     const startTime = Date.now();
 
     // Fetch current active inventory for context
-    const inventory = await this.prisma.inventory.findMany({
-      where: { isActive: true },
-      orderBy: { item: 'asc' },
-    });
+    const inventory: InventoryContextItem[] =
+      await this.prisma.inventory.findMany({
+        where: { isActive: true },
+        orderBy: { item: 'asc' },
+      });
 
     if (inventory.length === 0) {
       throw new BadRequestException(
@@ -83,7 +92,11 @@ export class AiService {
       // Parse AI response
       let parsed: AiParsedResult;
       try {
-        parsed = JSON.parse(rawResponse);
+        const rawParsed: unknown = JSON.parse(rawResponse);
+        if (!this.isAiParsedResult(rawParsed)) {
+          throw new Error('Invalid AI response shape');
+        }
+        parsed = rawParsed;
       } catch {
         this.logger.error(`Failed to parse AI response: ${rawResponse}`);
         throw new BadRequestException(
@@ -122,19 +135,13 @@ export class AiService {
   }
 
   private buildSystemPrompt(
-    inventory: Array<{
-      id: string;
-      item: string;
-      quality: string;
-      quantity: number;
-      unitPrice: any;
-    }>,
+    inventory: InventoryContextItem[],
     language: 'es' | 'en',
   ): string {
     const inventoryList = inventory
       .map(
         (item) =>
-          `- ${item.item} (${item.quality}): $${item.unitPrice}/unidad, ${item.quantity} disponibles [ID: ${item.id}]`,
+          `- ${item.item} (${item.quality}): $${String(item.unitPrice)}/unidad, ${item.quantity} disponibles [ID: ${item.id}]`,
       )
       .join('\n');
 
@@ -224,14 +231,12 @@ RESPOND ONLY with valid JSON:
   }
 
   private matchItemsToInventory(
-    parsedItems: Array<{ itemName: string; quality?: string; quantity: number }>,
-    inventory: Array<{
-      id: string;
-      item: string;
-      quality: string;
+    parsedItems: Array<{
+      itemName: string;
+      quality?: string;
       quantity: number;
-      unitPrice: any;
     }>,
+    inventory: InventoryContextItem[],
   ): ParsedItemDto[] {
     const matchedItems: ParsedItemDto[] = [];
 
@@ -271,5 +276,26 @@ RESPOND ONLY with valid JSON:
     }
 
     return matchedItems;
+  }
+
+  private isAiParsedResult(value: unknown): value is AiParsedResult {
+    if (typeof value !== 'object' || value === null) return false;
+
+    const candidate = value as Partial<AiParsedResult>;
+    const hasValidType =
+      candidate.type === 'SALE' || candidate.type === 'EXPENSE';
+    const hasValidTotal = typeof candidate.totalAmount === 'number';
+    const hasValidConfidence = typeof candidate.confidence === 'number';
+    const hasValidItems =
+      Array.isArray(candidate.items) &&
+      candidate.items.every(
+        (item) =>
+          typeof item === 'object' &&
+          item !== null &&
+          typeof (item as { itemName?: unknown }).itemName === 'string' &&
+          typeof (item as { quantity?: unknown }).quantity === 'number',
+      );
+
+    return hasValidType && hasValidTotal && hasValidConfidence && hasValidItems;
   }
 }

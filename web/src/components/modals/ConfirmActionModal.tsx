@@ -1,11 +1,16 @@
 import React from 'react';
 
+interface PendingEdit {
+  colKey: string;
+  value: string | number | null | undefined;
+}
+
 interface ConfirmActionModalProps {
   open: boolean;
   title: string;
   message: string;
-  item: any;
-  pendingEdit?: Omit<{ colKey: string; value: any; rowIdx?: number }, 'rowIdx'> | null;
+  item: object | null;
+  pendingEdit?: PendingEdit | null;
   onCancel: () => void;
   onConfirm: () => void;
   confirmLabel?: string;
@@ -31,6 +36,7 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
   cancelLabel = 'Cancelar',
 }) => {
   if (!open || !item) return null;
+  const itemRecord = item as Record<string, unknown>;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-background/80 z-50 backdrop-blur-sm">
@@ -42,7 +48,8 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
           <ul className="text-sm text-muted-foreground">
             {Object.keys(fieldLabels).map(key => (
               <li key={key}>
-                <span className="font-medium">{fieldLabels[key]}:</span> {item[key] ?? '-'}
+                <span className="font-medium">{fieldLabels[key]}:</span>{' '}
+                {String(itemRecord[key] ?? '-')}
               </li>
             ))}
           </ul>
@@ -52,7 +59,9 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
             <div className="font-semibold mb-1 text-primary">Resumen de cambios:</div>
             <div className="text-sm">
               <span className="font-medium">{fieldLabels[pendingEdit.colKey] || pendingEdit.colKey}:</span>{' '}
-              <span className="line-through text-destructive mr-2">{item[pendingEdit.colKey]}</span>
+              <span className="line-through text-destructive mr-2">
+                {String(itemRecord[pendingEdit.colKey] ?? '-')}
+              </span>
               <span className="text-secondary">{pendingEdit.value}</span>
             </div>
           </div>

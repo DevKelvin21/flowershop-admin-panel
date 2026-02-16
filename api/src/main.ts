@@ -36,7 +36,7 @@ async function bootstrap() {
     .setVersion('1.0')
     .addTag('Health', 'API health check endpoints')
     .build();
-    
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
@@ -45,4 +45,4 @@ async function bootstrap() {
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`🚀 Swagger is running on: http://localhost:${port}/api/docs`);
 }
-bootstrap();
+void bootstrap();

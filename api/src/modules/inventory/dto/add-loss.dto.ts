@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsPositive, MinLength, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsPositive,
+  MinLength,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class AddLossDto {

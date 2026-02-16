@@ -29,13 +29,24 @@ export function initializeFirebase(): admin.app.App | null {
   const privateKey = privateKeyRaw.replace(/\\n/g, '\n');
 
   // Validate that the private key looks like a PEM key
-  if (!privateKey.includes('-----BEGIN') || !privateKey.includes('PRIVATE KEY-----')) {
+  if (
+    !privateKey.includes('-----BEGIN') ||
+    !privateKey.includes('PRIVATE KEY-----')
+  ) {
     console.warn('');
-    console.warn('⚠️  Firebase Admin SDK not initialized: Invalid private key format');
-    console.warn('   The FIREBASE_PRIVATE_KEY must be a valid PEM-formatted RSA private key');
-    console.warn('   It should start with "-----BEGIN PRIVATE KEY-----" or "-----BEGIN RSA PRIVATE KEY-----"');
+    console.warn(
+      '⚠️  Firebase Admin SDK not initialized: Invalid private key format',
+    );
+    console.warn(
+      '   The FIREBASE_PRIVATE_KEY must be a valid PEM-formatted RSA private key',
+    );
+    console.warn(
+      '   It should start with "-----BEGIN PRIVATE KEY-----" or "-----BEGIN RSA PRIVATE KEY-----"',
+    );
     console.warn('');
-    console.warn('   ⚠️  Authentication is BYPASSED - all requests will use a mock dev user');
+    console.warn(
+      '   ⚠️  Authentication is BYPASSED - all requests will use a mock dev user',
+    );
     console.warn('');
     return null;
   }
@@ -57,14 +68,20 @@ export function initializeFirebase(): admin.app.App | null {
     console.warn('⚠️  Firebase Admin SDK initialization failed');
     console.warn(`   Error: ${errorMessage}`);
     console.warn('');
-    console.warn('   This is likely due to an invalid FIREBASE_PRIVATE_KEY format.');
+    console.warn(
+      '   This is likely due to an invalid FIREBASE_PRIVATE_KEY format.',
+    );
     console.warn('   The private key must be a valid PEM-formatted RSA key.');
     console.warn('');
     console.warn('   💡 To fix this:');
     console.warn('   1. Remove or rename your .env file temporarily');
-    console.warn('   2. Or set FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL to empty');
+    console.warn(
+      '   2. Or set FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL to empty',
+    );
     console.warn('');
-    console.warn('   ⚠️  Authentication is BYPASSED - all requests will use a mock dev user');
+    console.warn(
+      '   ⚠️  Authentication is BYPASSED - all requests will use a mock dev user',
+    );
     console.warn('');
     return null;
   }

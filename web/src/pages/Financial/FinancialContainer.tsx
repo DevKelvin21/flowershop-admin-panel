@@ -1,13 +1,14 @@
-import { useState, useMemo } from 'react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
+import type { CreateTransactionDto, TransactionType } from '@/lib/api/types';
 import { authService } from '@/services';
+import { useMemo, useState } from 'react';
 import { FinancialView } from './FinancialView';
+import { useAiTransaction } from './hooks/useAiTransaction';
+import { useFinancialCommands } from './hooks/useFinancialCommands';
 import { useFinancialData } from './hooks/useFinancialData';
 import { useFinancialFilters } from './hooks/useFinancialFilters';
-import { useFinancialCommands } from './hooks/useFinancialCommands';
-import { useAiTransaction } from './hooks/useAiTransaction';
-import type { TransactionType, CreateTransactionDto } from '@/lib/api/types';
 
 export function FinancialContainer() {
   useAuth(authService);
@@ -88,7 +89,7 @@ export function FinancialContainer() {
     await commands.createTransaction(dto);
   };
 
-  if (isLoading) return null;
+  if (isLoading) return <LoadingSpinner />;
   if (error) throw error;
 
   return (
