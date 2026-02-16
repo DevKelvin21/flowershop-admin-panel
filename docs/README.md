@@ -5,6 +5,10 @@ Last updated: 2026-02-16
 ## Active Plans
 - `docs/plans/CODE_IMPROVEMENT_PHASES.md` - Master engineering roadmap and phase log.
 - `docs/plans/INVENTORY_MODAL_COMPOSITION_PHASES.md` - Inventory modal compound-component refactor phases.
+- `docs/plans/CLOUD_RUN_DEPLOYMENT_PLAN.md` - API deployment plan for Cloud Run + GitHub Actions.
+
+## Deployment Runbooks
+- `docs/deploy/API_CLOUD_RUN_QUICKSTART.md` - Step-by-step setup to deploy `/api` to Cloud Run using GitHub Actions.
 
 ## Migration Archive
 Historical migration and refactor artifacts are archived under:
