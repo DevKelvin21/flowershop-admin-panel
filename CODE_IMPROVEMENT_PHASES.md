@@ -24,7 +24,7 @@ Skills applied for this roadmap:
 |---|---|---|---|
 | 0 | Guardrails and Workspace Hygiene | In Progress | Baseline captured; branch/scope conventions still to formalize |
 | 1 | Quality Gate Recovery | Completed | Lint/build/tests now pass for FE+BE |
-| 2 | Financial Module Composition Refactor | Pending | Move to compound component architecture |
+| 2 | Financial Module Composition Refactor | Completed | Compound modal + context + row-click detail shipped |
 | 3 | Synchronous AI Resilience and Cost Controls | Pending | Keep sync API, improve reliability in bad network |
 | 4 | Query and Data Layer Tightening | Pending | Cache and invalidation consistency |
 | 5 | Frontend Design Polish | Pending | Distinctive, coherent UI refresh |
@@ -73,22 +73,22 @@ Pattern source: `vercel-composition-patterns`
 - Eliminate modal prop bloat and TODO gaps in financial flow.
 
 ### Tasks
-- [ ] Add `TransactionModalProvider` with explicit context interface:
+- [x] Add `TransactionModalProvider` with explicit context interface:
   - `state`
   - `actions`
   - `meta`
-- [ ] Split modal into compound subcomponents:
+- [x] Split modal into compound subcomponents:
   - `TransactionModal.Frame`
   - `TransactionModal.Header`
   - `TransactionModal.Body`
   - `TransactionModal.Footer`
-- [ ] Implement explicit variants instead of mode booleans:
+- [x] Implement explicit variants instead of mode booleans:
   - `AddTransactionModal`
   - `ViewTransactionModal`
   - `EditTransactionModal` (at least scaffold + entry point)
-- [ ] Wire row click in transaction table to open detail view.
-- [ ] Keep delete action available both in table and detail view.
-- [ ] Remove obsolete TODO and old monolithic modal path.
+- [x] Wire row click in transaction table to open detail view.
+- [x] Keep delete action available both in table and detail view.
+- [x] Remove obsolete TODO and old monolithic modal path.
 
 ### Exit Criteria
 - Financial container/view props are simplified.
@@ -263,3 +263,39 @@ Copy this template and append an entry under "Phase Change Log".
   - `api npm run test:e2e`: pass
 - Risks / Follow-ups:
   - Frontend lint still has non-blocking fast-refresh warnings in shared UI files.
+
+### Phase 2 - Financial Module Composition Refactor
+- Status: Completed
+- Date: 2026-02-16
+- Summary:
+  - Replaced the monolithic Financial transaction modal with a context-backed compound modal architecture.
+  - Added explicit modal variants (`AddTransactionModal`, `ViewTransactionModal`, `EditTransactionModal`) with shared provider state/actions/meta contract.
+  - Implemented transaction detail view for row-click flow and added edit-mode scaffold entry point.
+  - Simplified Financial container/view wiring by removing modal prop drilling and centralizing modal actions in context.
+  - Kept delete action available in both table row actions and detail modal footer.
+- Files changed:
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/FinancialContainer.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/FinancialView.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionTable.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/AddTransactionModal.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/EditTransactionModal.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionAddForm.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionDetailView.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionEditForm.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionModal.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionModalBody.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionModalContext.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionModalFooter.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionModalHeader.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/TransactionModalProvider.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/ViewTransactionModal.tsx
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/index.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/types.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/useTransactionModal.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal.tsx (deleted)
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+- Validation:
+  - `web npm run lint`: pass (warnings only, unchanged baseline 4 warnings)
+  - `web npm run build`: pass
+- Risks / Follow-ups:
+  - Edit mode is intentionally scaffold-only in this phase and does not persist updates yet.
