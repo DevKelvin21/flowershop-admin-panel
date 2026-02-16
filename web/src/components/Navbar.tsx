@@ -35,16 +35,22 @@ export function Navbar({ userEmail, onLogout }: NavbarProps) {
     };
 
     return (
-        <NavigationMenu className="flex justify-between items-center p-4" viewport={false}>
-            <NavigationMenuList className="flex gap-2">
+        <NavigationMenu className="w-full md:w-auto" viewport={false}>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
+            <NavigationMenuList className="flex flex-wrap gap-2 rounded-xl border border-border/70 bg-card/70 p-1">
                 {navItems.map(({ path, label }) => {
                     const isActive = location.pathname === path;
                     return (
                         <NavigationMenuItem key={path}>
-                            <NavigationMenuLink asChild className="focus:bg-primary focus:text-primary-foreground rounded-md">
+                            <NavigationMenuLink asChild className="rounded-md focus:bg-primary focus:text-primary-foreground">
                                 <Link
                                     to={path}
-                                    className={cn(isActive && 'bg-primary')}
+                                    className={cn(
+                                        'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                                        isActive
+                                          ? 'bg-primary text-primary-foreground shadow-sm'
+                                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    )}
                                 >
                                     {label}
                                 </Link>
@@ -53,8 +59,8 @@ export function Navbar({ userEmail, onLogout }: NavbarProps) {
                     );
                 })}
             </NavigationMenuList>
-            <div className="flex items-center gap-4 ml-6">
-                <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 md:ml-2 md:justify-end">
+                <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-card/70 px-3 py-2">
                     <Sun className={cn('size-4 transition-colors', isDark ? 'text-muted-foreground' : 'text-primary')} aria-hidden />
                     <Switch
                         checked={isDark}
@@ -65,7 +71,7 @@ export function Navbar({ userEmail, onLogout }: NavbarProps) {
                 </div>
                 {userEmail && (
                     <div className="flex items-center gap-3">
-                        <Badge variant="default">
+                        <Badge variant="outline" className="max-w-[12rem] truncate">
                             {userEmail}
                         </Badge>
                         <Button
@@ -79,6 +85,7 @@ export function Navbar({ userEmail, onLogout }: NavbarProps) {
                         </Button>
                     </div>
                 )}
+            </div>
             </div>
         </NavigationMenu>
     );

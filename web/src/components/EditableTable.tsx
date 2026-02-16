@@ -19,60 +19,62 @@ export function EditableTable<T extends Record<string, unknown>>({
     const [editValue, setEditValue] = useState('')
 
     return (
-        <table className="min-w-full border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
-            <thead className="bg-muted">
-                <tr>
-                    {columns.map(col => (
-                        <th key={col.key} className="px-4 py-2 text-left font-semibold text-primary">{col.label}</th>
-                    ))}
-                    <th className="px-4 py-2 text-left font-semibold text-primary">Eliminar</th>
-                </tr>
-            </thead>
-            <tbody>
-                {data.map((row, rowIdx) => (
-                    <tr key={rowIdx} className="even:bg-muted/50">
+        <div className="overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
+            <table className="min-w-full text-card-foreground">
+                <thead className="bg-muted/70">
+                    <tr>
                         {columns.map(col => (
-                            <td
-                                key={col.key}
-                                className="px-4 py-2 cursor-pointer"
-                                onClick={() => {
-                                    setEditing({ row: rowIdx, col: col.key })
-                                    setEditValue(String((row as Record<string, unknown>)[col.key] ?? ''))
-                                }}
-                            >
-                                {editing && editing.row === rowIdx && editing.col === col.key ? (
-                                    <input
-                                        className="border border-border rounded px-2 py-1 w-full bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring"
-                                        value={editValue}
-                                        autoFocus
-                                        onChange={e => setEditValue(e.target.value)}
-                                        onBlur={() => {
-                                            onChange(rowIdx, col.key, editValue)
-                                            setEditing(null)
-                                        }}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') {
+                            <th key={col.key} className="px-4 py-3 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">{col.label}</th>
+                        ))}
+                        <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">Eliminar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.map((row, rowIdx) => (
+                        <tr key={rowIdx} className="border-t border-border/50 transition-colors even:bg-muted/20 hover:bg-muted/40">
+                            {columns.map(col => (
+                                <td
+                                    key={col.key}
+                                    className="cursor-pointer px-4 py-3"
+                                    onClick={() => {
+                                        setEditing({ row: rowIdx, col: col.key })
+                                        setEditValue(String((row as Record<string, unknown>)[col.key] ?? ''))
+                                    }}
+                                >
+                                    {editing && editing.row === rowIdx && editing.col === col.key ? (
+                                        <input
+                                            className="w-full rounded border border-border bg-background px-2 py-1 text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring"
+                                            value={editValue}
+                                            autoFocus
+                                            onChange={e => setEditValue(e.target.value)}
+                                            onBlur={() => {
                                                 onChange(rowIdx, col.key, editValue)
                                                 setEditing(null)
-                                            }
-                                        }}
-                                    />
-                                ) : (
-                                    String((row as Record<string, unknown>)[col.key] ?? '')
-                                )}
+                                            }}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    onChange(rowIdx, col.key, editValue)
+                                                    setEditing(null)
+                                                }
+                                            }}
+                                        />
+                                    ) : (
+                                        String((row as Record<string, unknown>)[col.key] ?? '')
+                                    )}
+                                </td>
+                            ))}
+                            <td className="px-4 py-3">
+                                <button
+                                    className="rounded bg-destructive px-3 py-1 text-destructive-foreground transition-colors hover:bg-destructive/90"
+                                    onClick={() => onDelete(rowIdx)}
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
                             </td>
-                        ))}
-                        <td className="px-4 py-2">
-                            <button
-                                className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-3 py-1 rounded"
-                                onClick={() => onDelete(rowIdx)}
-                            >
-                                <FontAwesomeIcon icon={faTrash} />
-                            </button>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
     )
 }

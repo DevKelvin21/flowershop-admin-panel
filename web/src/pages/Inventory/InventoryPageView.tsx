@@ -90,16 +90,32 @@ export function InventoryPageView({
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage error={error} />;
 
+  const outOfStockCount = inventory.data.filter((item) => item.quantity === 0).length;
+
   return (
-    <div>
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-xl border border-border/70 bg-muted/30 p-4 md:col-span-2">
+          <h2 className="font-serif text-2xl text-primary">Inventario y Pérdidas</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Administra el stock activo, registra pérdidas y controla quiebres de inventario.
+          </p>
+        </div>
+        <div className="rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+          <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Stock crítico</p>
+          <p className="mt-2 text-2xl font-semibold text-destructive">{outOfStockCount}</p>
+          <p className="text-xs text-muted-foreground">artículos sin existencias</p>
+        </div>
+      </div>
+
       <Tabs value={tabs.activeTab} onValueChange={(v) => tabs.onTabChange(v as 'items' | 'losses')}>
-        <div className="flex justify-between items-center mb-4">
-          <TabsList>
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <TabsList className="w-full md:w-auto">
             <TabsTrigger value="items">Inventario</TabsTrigger>
             <TabsTrigger value="losses">Pérdidas</TabsTrigger>
           </TabsList>
           <button
-            className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+            className="rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
             onClick={tabs.activeTab === 'items' ? modals.addItem.onOpen : modals.addLoss.onOpen}
           >
             {tabs.activeTab === 'items' ? 'Agregar Inventario' : 'Agregar Pérdida'}
@@ -201,26 +217,28 @@ function LossesTable({
   data: InventoryLoss[];
 }) {
   return (
-    <table className="min-w-full border border-border rounded-lg overflow-hidden bg-card text-card-foreground">
-      <thead className="bg-muted">
-        <tr>
-          <th className="px-4 py-2 text-left font-semibold text-primary">Artículo</th>
-          <th className="px-4 py-2 text-left font-semibold text-primary">Calidad</th>
-          <th className="px-4 py-2 text-left font-semibold text-primary">Cantidad</th>
-          <th className="px-4 py-2 text-left font-semibold text-primary">Fecha</th>
-        </tr>
-      </thead>
-      <tbody>
-        {data.map((loss) => (
-          <tr key={loss.id} className="even:bg-muted/50">
-            <td className="px-4 py-2">{loss.item}</td>
-            <td className="px-4 py-2">{loss.quality}</td>
-            <td className="px-4 py-2">{loss.quantity}</td>
-            <td className="px-4 py-2">{new Date(loss.timestamp).toLocaleDateString()}</td>
+    <div className="overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
+      <table className="min-w-full text-card-foreground">
+        <thead className="bg-muted/70">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">Artículo</th>
+            <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">Calidad</th>
+            <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">Cantidad</th>
+            <th className="px-4 py-3 text-left text-xs uppercase tracking-[0.15em] text-muted-foreground">Fecha</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {data.map((loss) => (
+            <tr key={loss.id} className="border-t border-border/50 transition-colors even:bg-muted/20 hover:bg-muted/40">
+              <td className="px-4 py-3">{loss.item}</td>
+              <td className="px-4 py-3">{loss.quality}</td>
+              <td className="px-4 py-3">{loss.quantity}</td>
+              <td className="px-4 py-3">{new Date(loss.timestamp).toLocaleDateString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

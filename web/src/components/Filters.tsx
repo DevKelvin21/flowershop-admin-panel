@@ -145,7 +145,7 @@ export function Filters({
     } = dateRange?.buttonProps ?? {};
 
     return (
-        <div className={cn('flex flex-wrap gap-2 mb-4', className)}>
+        <div className={cn('mb-4 flex flex-wrap gap-2 rounded-xl border border-border/70 bg-card/70 p-3 shadow-sm', className)}>
             {search && (
                 <Input
                     type={searchInputType ?? 'text'}

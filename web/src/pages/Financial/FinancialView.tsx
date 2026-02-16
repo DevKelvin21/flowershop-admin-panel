@@ -42,17 +42,23 @@ export function FinancialView({
   const { state: modalState, actions: modalActions } = useTransactionModal();
 
   return (
-    <div>
+    <div className="space-y-4">
+      <div className="rounded-xl border border-border/70 bg-muted/30 p-4">
+        <h2 className="font-serif text-2xl text-primary">Ventas y Gastos</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Registra transacciones y revisa márgenes con detalle por período.
+        </p>
+      </div>
       <Tabs value={tabs.activeTab} onValueChange={(v) => tabs.onTabChange(v as 'sales' | 'expenses' | 'summary')}>
-        <div className="flex justify-between items-center mb-4">
-          <TabsList>
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <TabsList className="w-full md:w-auto">
             <TabsTrigger value="sales">Ventas</TabsTrigger>
             <TabsTrigger value="expenses">Gastos</TabsTrigger>
             <TabsTrigger value="summary">Resumen</TabsTrigger>
           </TabsList>
           {tabs.activeTab !== 'summary' && (
             <Button
-              className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              className="rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
               onClick={() =>
                 modalActions.openAdd(
                   tabs.activeTab === 'sales' ? 'SALE' : 'EXPENSE',
