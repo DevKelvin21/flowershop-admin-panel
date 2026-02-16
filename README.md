@@ -1,54 +1,134 @@
-# React + TypeScript + Vite
+# Flowershop Admin Panel
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Monorepo for Floristeria Morales admin operations.
 
-Currently, two official plugins are available:
+- Frontend: `/web` (React 19 + TypeScript + TanStack Router/Query + Tailwind v4)
+- Backend: `/api` (NestJS + Prisma + PostgreSQL)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Current status
 
-## Expanding the ESLint configuration
+Migration away from Firebase Firestore is complete for business data.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Firebase remains for authentication token issuance.
+- Backend API is the source of truth for inventory, losses, transactions, analytics, and AI parse metadata.
+- AI transaction parsing is synchronous and includes fallback parsing for poor network/OpenAI outages.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Project structure
+
+```text
+flowershop-admin-panel/
+├── web/
+└── api/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Prerequisites
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- Node.js 18+
+- npm 9+
+- PostgreSQL (local recommended)
+- Firebase project credentials (frontend + backend auth verification)
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+## Local setup
+
+### 1. Backend (`/api`)
+
+```bash
+cd api
+npm install
 ```
+
+Create `/api/.env` from `/api/.env.example` and set:
+
+- `DATABASE_URL`
+- `PORT` (optional, default 8000)
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `OPENAI_API_KEY` (optional; fallback parser still works without it)
+
+Generate Prisma client and run migrations:
+
+```bash
+npx prisma generate
+npx prisma migrate dev
+```
+
+Run backend:
+
+```bash
+npm run start:dev
+```
+
+Backend base URL: `http://localhost:8000/api/v1`
+Swagger docs: `http://localhost:8000/api/docs`
+
+### 2. Frontend (`/web`)
+
+```bash
+cd web
+npm install
+```
+
+Create `/web/.env` with `VITE_FIREBASE_*` keys and optional API URL:
+
+```env
+VITE_API_URL=http://localhost:8000/api/v1
+```
+
+Run frontend:
+
+```bash
+npm run dev
+```
+
+Frontend URL: `http://localhost:5173`
+
+## PostgreSQL on macOS (Homebrew)
+
+```bash
+brew install postgresql@14
+brew services start postgresql@14
+pg_isready -h localhost -p 5432
+```
+
+Create role/database:
+
+```bash
+psql postgres
+CREATE ROLE flowershop WITH LOGIN PASSWORD 'flowershop';
+CREATE DATABASE flowershop_db OWNER flowershop;
+\q
+```
+
+Example `DATABASE_URL`:
+
+```env
+DATABASE_URL="postgresql://flowershop:flowershop@localhost:5432/flowershop_db?schema=public"
+```
+
+## Validation commands
+
+### Frontend
+
+```bash
+cd web
+npm run lint
+npm run build
+```
+
+### Backend
+
+```bash
+cd api
+npm run lint
+npm run build
+npm run test
+npm run test:e2e
+```
+
+## Documentation
+
+- Documentation index: `/docs/README.md`
+- Frontend details: `/web/README.md`
+- Backend details: `/api/README.md`
+- Incremental engineering roadmap and phase log: `/docs/plans/CODE_IMPROVEMENT_PHASES.md`

@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// INVENTORY MANAGEMENT
+// ============================================
+
+model Inventory {
+  id          String   @id @default(cuid())
+  item        String
+  quality     String   // Premium, Standard, etc.
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  losses       InventoryLoss[]
+  transactions TransactionItem[]
+
+  @@unique([item, quality])
+  @@index([isActive, item])
+}
+
+model InventoryLoss {
+  id           String    @id @default(cuid())
+  inventoryId  String
+  inventory    Inventory @relation(fields: [inventoryId], references: [id])
+  quantity     Int
+  reason       String    // Expired, Damaged, Wilted, etc.
+  notes        String?
+  recordedBy   String    // user email
+  recordedAt   DateTime  @default(now())
+
+  @@index([inventoryId, recordedAt])
+}
+
+// ============================================
+// FINANCIAL TRANSACTIONS
+// ============================================
+
+model Transaction {
+  id              String            @id @default(cuid())
+  type            TransactionType   // SALE or EXPENSE
+  totalAmount     Decimal           @db.Decimal(10, 2)
+  customerName    String?           // Legacy field, kept for backwards compatibility
+  salesAgent      String?           // Name of sales agent (e.g., "mila")
+  paymentMethod   PaymentMethod     @default(CASH)
+  notes           String?
+  messageSent     Boolean           @default(false) // WhatsApp/SMS confirmation
+  createdBy       String            // user email
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  items           TransactionItem[]
+  aiMetadata      AiTransactionMetadata?
+
+  @@index([type, createdAt])
+}
+
+enum TransactionType {
+  SALE
+  EXPENSE
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+}
+
+model TransactionItem {
+  id             String      @id @default(cuid())
+  transactionId  String
+  transaction    Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  inventoryId    String
+  inventory      Inventory   @relation(fields: [inventoryId], references: [id])
+  quantity       Int
+  unitPrice      Decimal     @db.Decimal(10, 2)
+  subtotal       Decimal     @db.Decimal(10, 2)
+
+  @@index([transactionId])
+}
+
+// ============================================
+// AI INTEGRATION
+// ============================================
+
+model AiTransactionMetadata {
+  id              String      @id @default(cuid())
+  transactionId   String      @unique
+  transaction     Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  userPrompt      String      // Original user input
+  aiResponse      String      @db.Text // Full AI response
+  confidence      Float       // 0-1 confidence score
+  processingTime  Int         // milliseconds
+  createdAt       DateTime    @default(now())
+}
+
+// ============================================
+// AUDIT LOGGING
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String   // Firebase UID or email
+  action      String   // CREATE_INVENTORY, UPDATE_SALE, etc.
+  entityType  String   // Inventory, Transaction, etc.
+  entityId    String?
+  changes     Json?    // Before/after snapshots
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([entityType, entityId])
+}
