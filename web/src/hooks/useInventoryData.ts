@@ -8,7 +8,11 @@ import {
   useAddInventoryLoss,
 } from '@/hooks/queries/inventory';
 import type { CreateInventoryDto, AddLossDto } from '@/lib/api/types';
-import type { InventoryItem, InventoryLoss } from '@/shared/models/inventory';
+import type {
+  InventoryItem,
+  InventoryLoss,
+  NewInventoryItem,
+} from '@/shared/models/inventory';
 
 /**
  * Hook that fetches and transforms inventory data from the API.
@@ -100,11 +104,7 @@ export function useInventoryCommands(
   const deleteMutation = useDeleteInventory();
   const addLossMutation = useAddInventoryLoss();
 
-  const addInventory = async (item: InventoryItem) => {
-    if (item.unitPrice === undefined || item.unitPrice === null) {
-      callbacks.onError?.(new Error('El precio unitario es requerido'));
-      return;
-    }
+  const addInventory = async (item: NewInventoryItem) => {
     const dto: CreateInventoryDto = {
       item: item.item,
       quality: item.quality,

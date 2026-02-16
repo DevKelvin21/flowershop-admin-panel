@@ -2,7 +2,6 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsNumber,
-  IsPositive,
   Min,
   MinLength,
   IsOptional,
@@ -44,7 +43,7 @@ export class UpdateInventoryDto {
   })
   @IsOptional()
   @IsNumber()
-  @IsPositive()
+  @Min(0)
   @Type(() => Number)
   unitPrice?: number;
 }

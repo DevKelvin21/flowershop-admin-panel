@@ -1,4 +1,8 @@
-import type { InventoryItem, InventoryLoss } from '@/shared/models/inventory';
+import type {
+  InventoryItem,
+  InventoryLoss,
+  NewInventoryItem,
+} from '@/shared/models/inventory';
 import { EditableTable } from '@/components/EditableTable';
 import { ConfirmActionModal } from '@/components/modals/ConfirmActionModal';
 import { Filters } from '@/components/Filters';
@@ -56,7 +60,7 @@ export interface InventoryPageViewProps {
       isOpen: boolean;
       onOpen: () => void;
       onClose: () => void;
-      onSubmit: (item: InventoryItem) => void;
+      onSubmit: (item: NewInventoryItem) => Promise<void> | void;
     };
     addLoss: {
       isOpen: boolean;

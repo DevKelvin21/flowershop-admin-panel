@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNumber,
-  IsPositive,
-  Min,
-  MinLength,
-} from 'class-validator';
+import { IsString, IsNumber, Min, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateInventoryDto {
@@ -43,7 +37,7 @@ export class CreateInventoryDto {
     minimum: 0,
   })
   @IsNumber()
-  @IsPositive()
+  @Min(0)
   @Type(() => Number)
   unitPrice: number;
 }

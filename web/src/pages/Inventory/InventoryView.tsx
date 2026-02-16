@@ -1,4 +1,4 @@
-import type { InventoryItem } from '../../shared/models/inventory'
+import type { InventoryItem, NewInventoryItem } from '../../shared/models/inventory'
 import { EditableTable } from '../../components/EditableTable'
 import { ConfirmActionModal } from '../../components/modals/ConfirmActionModal'
 import { Filters } from '../../components/Filters'
@@ -40,7 +40,7 @@ interface InventoryViewProps {
     closeAddModal: () => void;
     openConfirmModal: () => void;
     closeConfirmModal: () => void;
-    handleAddInventory: (item: InventoryItem) => void;
+    handleAddInventory: (item: NewInventoryItem) => Promise<void> | void;
     handleCancelConfirmModal: () => void;
     handleSubmitConfirmModal: () => void;
   };
