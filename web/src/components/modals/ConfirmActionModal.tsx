@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface PendingEdit {
   colKey: string;
@@ -36,10 +37,11 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
   cancelLabel = 'Cancelar',
 }) => {
   if (!open || !item) return null;
+  if (typeof document === 'undefined') return null;
   const itemRecord = item as Record<string, unknown>;
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-background/80 z-50 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm">
       <div className="bg-card text-card-foreground rounded-lg shadow-lg p-6 min-w-[320px] max-w-[90vw]">
         <h3 className="text-lg font-semibold mb-2 text-primary">{title}</h3>
         <p className="mb-4 text-foreground">{message}</p>
@@ -81,6 +83,7 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
