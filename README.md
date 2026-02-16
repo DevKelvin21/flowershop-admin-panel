@@ -93,6 +93,39 @@ npm run prisma:migrate
 npm run start:dev  # Start on http://localhost:3000
 ```
 
+#### 3.1 Local PostgreSQL on macOS (Homebrew)
+
+This project uses PostgreSQL locally (not Docker by default).
+
+```bash
+# Install (if needed)
+brew install postgresql@14
+
+# Start / stop / restart service
+brew services start postgresql@14
+brew services stop postgresql@14
+brew services restart postgresql@14
+
+# Verify service and port
+brew services list | rg postgresql
+pg_isready -h localhost -p 5432
+```
+
+Create role/database expected by `/api/.env`:
+
+```bash
+psql postgres
+CREATE ROLE flowershop WITH LOGIN PASSWORD 'flowershop';
+CREATE DATABASE flowershop_db OWNER flowershop;
+\q
+```
+
+Check connection string format in `/api/.env`:
+
+```bash
+DATABASE_URL="postgresql://flowershop:flowershop@localhost:5432/flowershop_db?schema=public"
+```
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -372,4 +405,3 @@ For questions, issues, or contributions, please contact the development team or 
 ---
 
 **Built with 🌸 for modern flower shop management**
-

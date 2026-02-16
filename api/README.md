@@ -35,6 +35,39 @@ $ npm install
 
 This project uses [Prisma](https://www.prisma.io/) as the ORM.
 
+### Local PostgreSQL on macOS (Homebrew)
+
+This API is configured for local PostgreSQL via `DATABASE_URL` in `.env`.
+
+```bash
+# Install (if needed)
+brew install postgresql@14
+
+# Start / stop / restart
+brew services start postgresql@14
+brew services stop postgresql@14
+brew services restart postgresql@14
+
+# Verify
+brew services list | rg postgresql
+pg_isready -h localhost -p 5432
+```
+
+Create local role/database used by default config:
+
+```bash
+psql postgres
+CREATE ROLE flowershop WITH LOGIN PASSWORD 'flowershop';
+CREATE DATABASE flowershop_db OWNER flowershop;
+\q
+```
+
+Expected `.env` format:
+
+```bash
+DATABASE_URL="postgresql://flowershop:flowershop@localhost:5432/flowershop_db?schema=public"
+```
+
 ### Database Setup
 
 ```bash
