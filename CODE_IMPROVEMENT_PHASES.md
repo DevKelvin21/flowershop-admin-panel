@@ -25,7 +25,7 @@ Skills applied for this roadmap:
 | 0 | Guardrails and Workspace Hygiene | In Progress | Baseline captured; branch/scope conventions still to formalize |
 | 1 | Quality Gate Recovery | Completed | Lint/build/tests now pass for FE+BE |
 | 2 | Financial Module Composition Refactor | Completed | Compound modal + context + row-click detail shipped |
-| 3 | Synchronous AI Resilience and Cost Controls | Pending | Keep sync API, improve reliability in bad network |
+| 3 | Synchronous AI Resilience and Cost Controls | Completed | Timeout/retry/fallback + draft autosave + cost caps |
 | 4 | Query and Data Layer Tightening | Pending | Cache and invalidation consistency |
 | 5 | Frontend Design Polish | Pending | Distinctive, coherent UI refresh |
 | 6 | Performance and Bundle Reduction | Pending | Reduce JS/CSS payload and heavy assets |
@@ -102,12 +102,12 @@ Pattern source: `vercel-composition-patterns`
 - Keep sync architecture, improve behavior on unstable network, and control API spend.
 
 ### Tasks
-- [ ] Add backend timeout and single retry policy for transient OpenAI errors.
-- [ ] Add graceful fallback parser (rule-based minimal extraction) when AI fails.
-- [ ] Add frontend transaction draft autosave and recovery.
-- [ ] Keep manual transaction path fully usable when AI is unavailable.
-- [ ] Limit prompt/context size and response tokens to reduce cost.
-- [ ] Add lightweight dedupe/cache for repeated prompt submissions in short windows.
+- [x] Add backend timeout and single retry policy for transient OpenAI errors.
+- [x] Add graceful fallback parser (rule-based minimal extraction) when AI fails.
+- [x] Add frontend transaction draft autosave and recovery.
+- [x] Keep manual transaction path fully usable when AI is unavailable.
+- [x] Limit prompt/context size and response tokens to reduce cost.
+- [x] Add lightweight dedupe/cache for repeated prompt submissions in short windows.
 
 ### Exit Criteria
 - User can complete transaction flow even with intermittent failures.
@@ -299,3 +299,30 @@ Copy this template and append an entry under "Phase Change Log".
   - `web npm run build`: pass
 - Risks / Follow-ups:
   - Edit mode is intentionally scaffold-only in this phase and does not persist updates yet.
+
+### Phase 3 - Synchronous AI Resilience and Cost Controls
+- Status: Completed
+- Date: 2026-02-16
+- Summary:
+  - Added backend timeout and explicit one-retry logic for transient OpenAI failures.
+  - Added a synchronous rule-based fallback parser so `/ai/parse-transaction` keeps working even when OpenAI is unavailable.
+  - Added prompt/context/token cost caps and short-window in-memory dedupe/cache for repeated prompts.
+  - Added frontend transaction draft autosave/recovery (localStorage, 24h TTL) to reduce data loss on flaky networks.
+  - Added backend unit tests for fallback parser behavior and inventory-empty guard.
+- Files changed:
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/ai/ai.service.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/ai/ai.controller.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/ai/dto/parse-transaction.dto.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/ai/ai.service.spec.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/hooks/useAiTransaction.ts
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+- Validation:
+  - `api npm run lint`: pass
+  - `api npm run build`: pass
+  - `api npm run test -- --runInBand`: pass
+  - `api npm run test:e2e`: pass
+  - `web npm run lint`: pass (warnings only, unchanged baseline 4 warnings)
+  - `web npm run build`: pass
+- Risks / Follow-ups:
+  - Fallback parser is intentionally conservative and may require manual adjustment for ambiguous prompts.
+  - AI dedupe/cache is in-memory (single instance); persistent/shared cache is out of scope for current single-user architecture.
