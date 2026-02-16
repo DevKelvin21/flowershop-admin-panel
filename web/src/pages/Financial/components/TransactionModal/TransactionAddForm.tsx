@@ -1,12 +1,34 @@
 import { AiTransactionInput } from '@/components/ai/AiTransactionInput';
 import { ParsedTransactionPreview } from '@/components/ai/ParsedTransactionPreview';
 import { toast } from 'sonner';
+import { useMemo } from 'react';
 import type { PaymentMethod, TransactionType } from '@/lib/api/types';
 import { useTransactionModal } from './useTransactionModal';
+
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+  }).format(amount);
+}
 
 export function TransactionAddForm() {
   const { state, actions } = useTransactionModal();
   const { draft, aiResult, inventoryOptions } = state;
+
+  const suggestedTotal = useMemo(() => {
+    if (draft.items.length === 0) return 0;
+
+    const inventoryById = new Map(
+      inventoryOptions.map((item) => [item.id, item.unitPrice]),
+    );
+
+    return draft.items.reduce((sum, item) => {
+      const unitPrice = inventoryById.get(item.inventoryId) ?? 0;
+      const quantity = Number.isFinite(item.quantity) ? item.quantity : 0;
+      return sum + unitPrice * quantity;
+    }, 0);
+  }, [draft.items, inventoryOptions]);
 
   return (
     <div className="space-y-4">
@@ -96,6 +118,28 @@ export function TransactionAddForm() {
               placeholder="Notas adicionales"
               rows={2}
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium">Total manual</label>
+            <input
+              type="number"
+              className="w-full rounded border border-border bg-background px-3 py-2"
+              value={draft.manualTotalAmount}
+              onChange={(e) =>
+                actions.updateDraft((prev) => ({
+                  ...prev,
+                  manualTotalAmount: e.target.value,
+                }))
+              }
+              min={0}
+              step="0.01"
+              placeholder="Opcional"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Sugerido por inventario: {formatCurrency(suggestedTotal)}.
+              Si lo dejas vacio, se usa el calculado automaticamente.
+            </p>
           </div>
 
           <div>

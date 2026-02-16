@@ -10,6 +10,7 @@ export interface InventoryOption {
   item: string;
   quality: string;
   quantity: number;
+  unitPrice: number;
 }
 
 export type ModalMode =

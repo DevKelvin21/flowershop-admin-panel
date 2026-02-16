@@ -11,6 +11,13 @@ import { TransactionSummaryDto } from './dto/transaction-summary.dto';
 import { Prisma, TransactionType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 
+interface PricedTransactionItem {
+  inventoryId: string;
+  quantity: number;
+  unitPrice: Decimal;
+  subtotal: Decimal;
+}
+
 @Injectable()
 export class TransactionsService {
   constructor(private prisma: PrismaService) {}
@@ -31,7 +38,8 @@ export class TransactionsService {
     }
 
     // Check inventory availability and calculate amounts
-    const transactionItems: any[] = [];
+    const transactionItems: PricedTransactionItem[] = [];
+    const calculatedSubtotals: Decimal[] = [];
     let totalAmount = new Decimal(0);
 
     for (const item of dto.items) {
@@ -58,12 +66,37 @@ export class TransactionsService {
       const unitPrice = inventory.unitPrice;
       const subtotal = unitPrice.mul(item.quantity);
       totalAmount = totalAmount.add(subtotal);
+      calculatedSubtotals.push(subtotal);
 
       transactionItems.push({
         inventoryId: item.inventoryId,
         quantity: item.quantity,
         unitPrice,
         subtotal,
+      });
+    }
+
+    if (dto.totalAmount !== undefined) {
+      const manualTotalAmount = new Decimal(dto.totalAmount);
+      totalAmount = manualTotalAmount;
+
+      const weights =
+        totalAmount.gt(0) && calculatedSubtotals.some((value) => value.gt(0))
+          ? calculatedSubtotals.map((value) => value.toNumber())
+          : dto.items.map((item) => item.quantity);
+
+      const distributedSubtotals = this.distributeAmountByWeight(
+        manualTotalAmount,
+        weights,
+      );
+
+      transactionItems.forEach((item, index) => {
+        const subtotal = distributedSubtotals[index] ?? new Decimal(0);
+        const quantity = item.quantity > 0 ? item.quantity : 1;
+        item.subtotal = subtotal;
+        item.unitPrice = subtotal
+          .div(quantity)
+          .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
       });
     }
 
@@ -140,6 +173,52 @@ export class TransactionsService {
     });
 
     return result;
+  }
+
+  private distributeAmountByWeight(
+    totalAmount: Decimal,
+    weights: number[],
+  ): Decimal[] {
+    if (weights.length === 0) return [];
+
+    const totalCents = Math.round(totalAmount.toNumber() * 100);
+    const safeWeights = weights.map((weight) =>
+      Number.isFinite(weight) && weight > 0 ? weight : 0,
+    );
+    const totalWeight = safeWeights.reduce((sum, value) => sum + value, 0);
+
+    if (totalWeight <= 0) {
+      return this.distributeAmountEvenly(totalCents, safeWeights.length);
+    }
+
+    let allocatedCents = 0;
+
+    return safeWeights.map((weight, index) => {
+      if (index === safeWeights.length - 1) {
+        return this.centsToDecimal(totalCents - allocatedCents);
+      }
+
+      const shareCents = Math.floor((totalCents * weight) / totalWeight);
+      allocatedCents += shareCents;
+      return this.centsToDecimal(shareCents);
+    });
+  }
+
+  private distributeAmountEvenly(totalCents: number, count: number): Decimal[] {
+    if (count === 0) return [];
+
+    const baseShare = Math.floor(totalCents / count);
+    let remaining = totalCents - baseShare * count;
+
+    return Array.from({ length: count }, () => {
+      const extra = remaining > 0 ? 1 : 0;
+      remaining -= extra;
+      return this.centsToDecimal(baseShare + extra);
+    });
+  }
+
+  private centsToDecimal(valueInCents: number): Decimal {
+    return new Decimal(valueInCents).div(100);
   }
 
   async findAll(query: TransactionQueryDto) {

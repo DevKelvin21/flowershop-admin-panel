@@ -35,6 +35,7 @@ export function useFinancialData(params: TransactionQueryParams) {
         item: item.item,
         quality: item.quality,
         quantity: item.quantity,
+        unitPrice: item.unitPrice,
       })) ?? [],
     [inventoryData]
   );

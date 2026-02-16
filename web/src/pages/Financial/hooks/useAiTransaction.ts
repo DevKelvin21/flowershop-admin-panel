@@ -7,6 +7,7 @@ export interface TransactionDraft {
   salesAgent: string;
   customerName: string;
   notes: string;
+  manualTotalAmount: string;
   items: { inventoryId: string; quantity: number }[];
 }
 
@@ -16,6 +17,7 @@ const emptyDraft: TransactionDraft = {
   salesAgent: '',
   customerName: '',
   notes: '',
+  manualTotalAmount: '',
   items: [],
 };
 
@@ -33,6 +35,7 @@ function isDraftEmpty(draft: TransactionDraft): boolean {
     draft.salesAgent.trim() === '' &&
     draft.customerName.trim() === '' &&
     draft.notes.trim() === '' &&
+    draft.manualTotalAmount.trim() === '' &&
     draft.items.length === 0
   );
 }
@@ -70,6 +73,10 @@ function loadPersistedDraft(initialType: TransactionType): TransactionDraft | nu
       salesAgent: draft.salesAgent || '',
       customerName: draft.customerName || '',
       notes: draft.notes || '',
+      manualTotalAmount:
+        typeof draft.manualTotalAmount === 'string'
+          ? draft.manualTotalAmount
+          : '',
       items: draft.items
         .filter((item) => item && typeof item.inventoryId === 'string')
         .map((item) => ({
@@ -126,6 +133,7 @@ export function useAiTransaction(initialType: TransactionType) {
       salesAgent: result.salesAgent || '',
       customerName: '',
       notes: result.notes || '',
+      manualTotalAmount: String(result.totalAmount || ''),
       items: result.items.map((item) => ({
         inventoryId: item.inventoryId,
         quantity: item.quantity,

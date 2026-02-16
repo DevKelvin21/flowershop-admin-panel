@@ -60,12 +60,25 @@ export function TransactionModalProvider({
       return;
     }
 
+    const normalizedTotal = ai.draft.manualTotalAmount.trim();
+    let manualTotalAmount: number | undefined;
+
+    if (normalizedTotal.length > 0) {
+      const parsedTotal = Number(normalizedTotal);
+      if (!Number.isFinite(parsedTotal) || parsedTotal < 0) {
+        toast.error('El total manual debe ser un numero mayor o igual a 0');
+        return;
+      }
+      manualTotalAmount = parsedTotal;
+    }
+
     const dto: CreateTransactionDto = {
       type: ai.draft.type,
       paymentMethod: ai.draft.paymentMethod,
       salesAgent: ai.draft.salesAgent || undefined,
       customerName: ai.draft.customerName || undefined,
       notes: ai.draft.notes || undefined,
+      totalAmount: manualTotalAmount,
       items: ai.draft.items,
       aiMetadata: ai.aiResult
         ? {

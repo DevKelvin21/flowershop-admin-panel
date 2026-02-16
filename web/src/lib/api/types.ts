@@ -84,6 +84,7 @@ export interface CreateTransactionDto {
   salesAgent?: string;
   customerName?: string;
   notes?: string;
+  totalAmount?: number;
   items: {
     inventoryId: string;
     quantity: number;

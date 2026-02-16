@@ -111,6 +111,18 @@ export class CreateTransactionDto {
   @IsString()
   notes?: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Optional manual total amount override for variable pricing transactions',
+    example: 85000,
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
+  totalAmount?: number;
+
   @ApiProperty({
     description: 'Transaction items',
     type: [TransactionItemDto],
