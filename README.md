@@ -39,7 +39,8 @@ npm install
 
 Create `/api/.env` from `/api/.env.example` and set:
 
-- `DATABASE_URL`
+- `DATABASE_URL` (pooled connection for API runtime)
+- `DIRECT_URL` (direct connection for Prisma migrations)
 - `PORT` (optional, default 8000)
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
@@ -100,11 +101,16 @@ CREATE DATABASE flowershop_db OWNER flowershop;
 \q
 ```
 
-Example `DATABASE_URL`:
+Example local DB URLs:
 
 ```env
 DATABASE_URL="postgresql://flowershop:flowershop@localhost:5432/flowershop_db?schema=public"
+DIRECT_URL="postgresql://flowershop:flowershop@localhost:5432/flowershop_db?schema=public"
 ```
+
+For Neon:
+- `DATABASE_URL`: use the pooled host (`-pooler`).
+- `DIRECT_URL`: use the direct host (non-pooler) from Neon connection details.
 
 ## Validation commands
 
@@ -132,3 +138,4 @@ npm run test:e2e
 - Frontend details: `/web/README.md`
 - Backend details: `/api/README.md`
 - Incremental engineering roadmap and phase log: `/docs/plans/CODE_IMPROVEMENT_PHASES.md`
+- Cloud deployment plan (API): `/docs/plans/CLOUD_RUN_DEPLOYMENT_PLAN.md`

@@ -37,7 +37,8 @@ Swagger: `http://localhost:8000/api/docs`
 
 Required:
 
-- `DATABASE_URL`
+- `DATABASE_URL` (pooled connection for API runtime)
+- `DIRECT_URL` (direct connection for Prisma migrations)
 - `PORT`
 - `FIREBASE_PROJECT_ID`
 - `FIREBASE_CLIENT_EMAIL`
@@ -70,11 +71,16 @@ CREATE DATABASE flowershop_db OWNER flowershop;
 \q
 ```
 
-Example connection string:
+Example local DB URLs:
 
 ```env
 DATABASE_URL="postgresql://flowershop:flowershop@localhost:5432/flowershop_db?schema=public"
+DIRECT_URL="postgresql://flowershop:flowershop@localhost:5432/flowershop_db?schema=public"
 ```
+
+Neon mapping:
+- `DATABASE_URL`: pooled URL (host includes `-pooler`).
+- `DIRECT_URL`: direct URL (non-pooler host).
 
 ## Scripts
 
@@ -122,6 +128,29 @@ npm run build
 npm run test -- --runInBand
 npm run test:e2e
 ```
+
+## Cloud Run Deployment (Planned)
+
+Deployment automation plan is tracked here:
+- `/docs/plans/CLOUD_RUN_DEPLOYMENT_PLAN.md`
+
+Planned target:
+- Build and deploy `/api` to Google Cloud Run from GitHub Actions on `main`.
+- Use Workload Identity Federation (OIDC) instead of storing a GCP service-account JSON key in GitHub.
+
+Core configuration that will be required in cloud runtime:
+- `DATABASE_URL`
+- `DIRECT_URL` (required if migrations are executed during deploy/CI jobs)
+- `PORT` (Cloud Run injects this automatically)
+- `FIREBASE_PROJECT_ID`
+- `FIREBASE_CLIENT_EMAIL`
+- `FIREBASE_PRIVATE_KEY`
+- `OPENAI_API_KEY` (optional, fallback parser still works)
+
+Before enabling automated deploys:
+1. Complete GCP bootstrap (Artifact Registry, IAM roles, runtime/deployer service accounts).
+2. Complete one manual `gcloud run deploy` dry run.
+3. Add and validate `.github/workflows/deploy-api-cloud-run.yml`.
 
 ## Notes
 
