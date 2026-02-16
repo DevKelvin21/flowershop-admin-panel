@@ -20,10 +20,10 @@ Deploy `/api` to Google Cloud Run and automate deployments from GitHub Actions t
 | Phase | Name | Status | Notes |
 |---|---|---|---|
 | 0 | Architecture Decisions | Pending | Region, service names, env split, auth mode |
-| 1 | Containerization | Pending | Production Dockerfile + `.dockerignore` |
+| 1 | Containerization | Completed | Added production Dockerfile + `.dockerignore` |
 | 2 | GCP Bootstrap | Pending | APIs, Artifact Registry, service accounts, IAM |
 | 3 | Manual Dry Run | Pending | First deploy from local `gcloud` |
-| 4 | GitHub Actions CD | Pending | Push to `main` deploys Cloud Run service |
+| 4 | GitHub Actions CD | In Progress | Workflow added; waiting for GCP/GitHub values |
 | 5 | Operations Hardening | Pending | Migrations, rollback, monitoring, alerting |
 
 ---
@@ -49,8 +49,8 @@ Deploy `/api` to Google Cloud Run and automate deployments from GitHub Actions t
 
 ## Phase 1 - Containerization
 ### Tasks
-- [ ] Add `/api/Dockerfile` (multi-stage build for NestJS production runtime).
-- [ ] Add `/api/.dockerignore`.
+- [x] Add `/api/Dockerfile` (multi-stage build for NestJS production runtime).
+- [x] Add `/api/.dockerignore`.
 - [ ] Ensure container startup uses `node dist/main` and honors injected `PORT`.
 - [ ] Add image build command docs.
 
@@ -117,12 +117,13 @@ Deploy `/api` to Google Cloud Run and automate deployments from GitHub Actions t
 - `GCP_REGION` (var)
 - `AR_REPOSITORY` (var)
 - `CLOUD_RUN_SERVICE` (var)
+- `CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT` (var)
 - `GCP_WORKLOAD_IDENTITY_PROVIDER` (secret or var)
 - `GCP_DEPLOYER_SERVICE_ACCOUNT` (secret or var)
 - App env vars/secrets referenced by deploy step (`DATABASE_URL`, Firebase admin creds, OpenAI key, etc.)
 
 ### Tasks
-- [ ] Add `.github/workflows/deploy-api-cloud-run.yml`.
+- [x] Add `.github/workflows/deploy-api-cloud-run.yml`.
 - [ ] Add environment protection rule for `production` (optional approval).
 - [ ] Validate from a test commit to `main`.
 
@@ -179,3 +180,31 @@ After each phase completion, append:
 - Risks / Follow-ups:
   - ...
 ```
+
+### Phase 1 - Containerization
+- Status: Completed
+- Date: 2026-02-16
+- Summary:
+  - Added multi-stage backend image build and lean runtime dependencies.
+  - Added Docker ignore rules to keep build context small.
+- Files changed:
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/Dockerfile
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/.dockerignore
+- Validation:
+  - command: `npm run build` (api): pass
+  - command: `docker build -f api/Dockerfile -t flowershop-api-local-test:latest api`: pass
+- Risks / Follow-ups:
+  - Validate container boot and health endpoint in Cloud Run dry run.
+
+### Phase 4 - GitHub Actions CD
+- Status: In Progress
+- Date: 2026-02-16
+- Summary:
+  - Added deploy workflow with OIDC auth, Artifact Registry push, Cloud Run deploy, and smoke check.
+  - Added optional migration gate via `RUN_API_MIGRATIONS`.
+- Files changed:
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/.github/workflows/deploy-api-cloud-run.yml
+- Validation:
+  - command: workflow syntax review completed (execution pending repo variables/secrets)
+- Risks / Follow-ups:
+  - Must configure WIF provider, deployer SA, and runtime env secrets before first run.

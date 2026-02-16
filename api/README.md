@@ -133,6 +133,8 @@ npm run test:e2e
 
 Deployment automation plan is tracked here:
 - `/docs/plans/CLOUD_RUN_DEPLOYMENT_PLAN.md`
+- `/docs/deploy/API_CLOUD_RUN_QUICKSTART.md`
+- `/.github/workflows/deploy-api-cloud-run.yml`
 
 Planned target:
 - Build and deploy `/api` to Google Cloud Run from GitHub Actions on `main`.

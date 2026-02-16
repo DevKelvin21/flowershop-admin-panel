@@ -139,3 +139,4 @@ npm run test:e2e
 - Backend details: `/api/README.md`
 - Incremental engineering roadmap and phase log: `/docs/plans/CODE_IMPROVEMENT_PHASES.md`
 - Cloud deployment plan (API): `/docs/plans/CLOUD_RUN_DEPLOYMENT_PLAN.md`
+- Cloud Run setup runbook: `/docs/deploy/API_CLOUD_RUN_QUICKSTART.md`
