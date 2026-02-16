@@ -128,6 +128,7 @@ npm run test:e2e
 
 ## Documentation
 
+- Documentation index: `/docs/README.md`
 - Frontend details: `/web/README.md`
 - Backend details: `/api/README.md`
-- Incremental engineering roadmap and phase log: `/CODE_IMPROVEMENT_PHASES.md`
+- Incremental engineering roadmap and phase log: `/docs/plans/CODE_IMPROVEMENT_PHASES.md`

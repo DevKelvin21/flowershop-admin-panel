@@ -57,10 +57,10 @@ The project has **completed migration** from Firebase Backend-as-a-Service to a 
 **Next Phase**: Phase 5 - Testing & Polish
 
 **Reference Documentation**:
-- `/MIGRATION_PLAN.md` - Complete modernization plan (6 phases)
-- `/PHASE1_COMPLETE.md` - Phase 1 implementation details
-- `/PHASE2_COMPLETE.md` - Phase 2 implementation details
-- `/PHASE3_COMPLETE.md` - Phase 3 implementation details
+- `/docs/archive/migration/MIGRATION_PLAN.md` - Complete modernization plan (6 phases)
+- `/docs/archive/migration/PHASE1_COMPLETE.md` - Phase 1 implementation details
+- `/docs/archive/migration/PHASE2_COMPLETE.md` - Phase 2 implementation details
+- `/docs/archive/migration/PHASE3_COMPLETE.md` - Phase 3 implementation details
 - This file (CLAUDE.md) - Current architecture and conventions
 
 ## Commands
@@ -694,7 +694,7 @@ Architecture supports testing but tests not written yet.
 **Current State**: Frontend → Firebase (Auth + Firestore)
 **Migration Target**: Frontend → NestJS REST API + PostgreSQL (with Firebase Auth validation)
 
-**Migration Plan**: See `/MIGRATION_PLAN.md` for complete details
+**Migration Plan**: See `/docs/archive/migration/MIGRATION_PLAN.md` for complete details
 
 The Repository pattern, Service interfaces, and factory functions are specifically designed to support this migration:
 1. Swap factory functions to return HTTP-based repository implementations

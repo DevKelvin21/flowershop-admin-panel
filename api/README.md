@@ -127,4 +127,4 @@ npm run test:e2e
 
 - Keep Prisma schema and generated client in sync after schema changes (`npx prisma generate`).
 - Update endpoint docs/examples when response contracts change (e.g., analytics `salesByDay.total`).
-- For phase-by-phase implementation history, see `/CODE_IMPROVEMENT_PHASES.md`.
+- For phase-by-phase implementation history, see `/docs/plans/CODE_IMPROVEMENT_PHASES.md`.

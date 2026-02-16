@@ -211,7 +211,7 @@ Copy this template and append an entry under "Phase Change Log".
   - Baseline implementation and gaps reviewed.
   - This roadmap created for phased execution and updates.
 - Files changed:
-  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/docs/plans/CODE_IMPROVEMENT_PHASES.md
 - Validation:
   - roadmap file creation: done
 - Risks / Follow-ups:
@@ -293,7 +293,7 @@ Copy this template and append an entry under "Phase Change Log".
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/types.ts
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal/useTransactionModal.ts
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/components/TransactionModal.tsx (deleted)
-  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/docs/plans/CODE_IMPROVEMENT_PHASES.md
 - Validation:
   - `web npm run lint`: pass (warnings only, unchanged baseline 4 warnings)
   - `web npm run build`: pass
@@ -315,7 +315,7 @@ Copy this template and append an entry under "Phase Change Log".
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/ai/dto/parse-transaction.dto.ts
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/ai/ai.service.spec.ts
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/pages/Financial/hooks/useAiTransaction.ts
-  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/docs/plans/CODE_IMPROVEMENT_PHASES.md
 - Validation:
   - `api npm run lint`: pass
   - `api npm run build`: pass
@@ -347,7 +347,7 @@ Copy this template and append an entry under "Phase Change Log".
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/src/lib/api/endpoints.ts
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/transactions/transactions.service.ts
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/src/modules/transactions/transactions.controller.ts
-  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/docs/plans/CODE_IMPROVEMENT_PHASES.md
 - Validation:
   - `web npm run lint`: pass (warnings only, unchanged baseline 4 warnings)
   - `web npm run build`: pass
@@ -416,7 +416,7 @@ Copy this template and append an entry under "Phase Change Log".
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/README.md
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/web/README.md
   - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/api/README.md
-  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/CODE_IMPROVEMENT_PHASES.md
+  - /Users/kelvin/Sources/Floristeria Morales/flowershop-admin-panel/docs/plans/CODE_IMPROVEMENT_PHASES.md
 - Validation:
   - manual documentation consistency review: done
 - Risks / Follow-ups:

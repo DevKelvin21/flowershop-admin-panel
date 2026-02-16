@@ -56,7 +56,7 @@ The project has **completed migration** from Firebase Backend-as-a-Service to a 
 **Next Phase**: Phase 5 - Optimization & Polish
 
 **Reference Documentation**:
-- `/MIGRATION_PLAN.md` - Complete modernization plan (6 phases)
+- `/docs/archive/migration/MIGRATION_PLAN.md` - Complete modernization plan (6 phases)
 - This file (GEMINI.md) - Current architecture and conventions
 
 ## Commands

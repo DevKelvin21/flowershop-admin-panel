@@ -94,4 +94,4 @@ Query keys are normalized and grouped for targeted invalidation.
 ## Notes
 
 - `npm run lint` currently reports only known fast-refresh warnings from shared UI files.
-- For phase-by-phase implementation history, see `/CODE_IMPROVEMENT_PHASES.md`.
+- For phase-by-phase implementation history, see `/docs/plans/CODE_IMPROVEMENT_PHASES.md`.
