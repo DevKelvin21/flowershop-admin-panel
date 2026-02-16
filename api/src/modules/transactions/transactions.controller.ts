@@ -167,8 +167,8 @@ export class TransactionsController {
         startDate: '2025-11-03T00:00:00.000Z',
         endDate: '2025-12-03T12:00:00.000Z',
         salesByDay: [
-          { date: '2025-12-01', amount: 150.5 },
-          { date: '2025-12-02', amount: 230.75 },
+          { date: '2025-12-01', total: 150.5 },
+          { date: '2025-12-02', total: 230.75 },
         ],
         topItems: [
           {

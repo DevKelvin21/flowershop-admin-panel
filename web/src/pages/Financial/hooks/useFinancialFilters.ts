@@ -1,29 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { TransactionQueryParams } from '@/lib/api/types';
-
-const CENTRAL_TIME_ZONE = 'America/Chicago';
-
-function getDateString(date: Date): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: CENTRAL_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date); // YYYY-MM-DD in CST/CDT
-}
-
-function getTodayAndTomorrow(): { today: string; tomorrow: string } {
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return {
-    today: getDateString(today),
-    tomorrow: getDateString(tomorrow),
-  };
-}
+import { getDefaultFinancialDateRange } from '../utils/dateRange';
 
 export function useFinancialFilters(activeTab: 'sales' | 'expenses' | 'summary') {
-  const { today, tomorrow } = getTodayAndTomorrow();
+  const { today, tomorrow } = getDefaultFinancialDateRange();
 
   // Default: from today to tomorrow (API requires different dates)
   const [dateFilter, setDateFilter] = useState<{ from: string; to: string }>({

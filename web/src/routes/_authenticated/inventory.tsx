@@ -3,6 +3,10 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useModal } from '@/hooks/useModal';
+import {
+  inventoryHistoryOptions,
+  inventoryListOptions,
+} from '@/hooks/queries/inventory';
 import { authService } from '@/services';
 import { useInventoryData, useInventoryCommands } from '@/hooks/useInventoryData';
 import { useInventoryPageFilters } from '@/hooks/useInventoryPageFilters';
@@ -11,6 +15,14 @@ import type { Inventory } from '@/lib/api/types';
 import type { InventoryItem } from '@/shared/models/inventory';
 
 export const Route = createFileRoute('/_authenticated/inventory')({
+  loader: async ({ context }) => {
+    await Promise.allSettled([
+      context.queryClient.ensureQueryData(inventoryListOptions()),
+      context.queryClient.ensureQueryData(
+        inventoryHistoryOptions({ limit: 100 }),
+      ),
+    ]);
+  },
   component: InventoryContainer,
 });
 

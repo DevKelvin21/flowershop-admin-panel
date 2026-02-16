@@ -400,9 +400,9 @@ export class TransactionsService {
       period,
       startDate,
       endDate: now,
-      salesByDay: Object.entries(salesByDay).map(([date, amount]) => ({
+      salesByDay: Object.entries(salesByDay).map(([date, total]) => ({
         date,
-        amount,
+        total,
       })),
       topItems,
     };

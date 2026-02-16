@@ -17,6 +17,11 @@ import type {
   ParseTransactionResponse,
 } from './types';
 
+interface RawTransactionAnalytics {
+  salesByDay: Array<{ date: string; total?: number; amount?: number }>;
+  topItems: Array<{ item: string; quantity: number; revenue: number }>;
+}
+
 function buildQueryString(params: Record<string, string | number | boolean | undefined | null>): string {
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -79,7 +84,15 @@ export const transactionsApi = {
     apiClient.get<TransactionSummary>(`/transactions/summary${buildQueryString(params || {})}`),
 
   getAnalytics: (period: 'week' | 'month' | 'year' = 'month') =>
-    apiClient.get<TransactionAnalytics>(`/transactions/analytics?period=${period}`),
+    apiClient
+      .get<RawTransactionAnalytics>(`/transactions/analytics?period=${period}`)
+      .then((response) => ({
+        ...response,
+        salesByDay: response.salesByDay.map((item) => ({
+          date: item.date,
+          total: item.total ?? item.amount ?? 0,
+        })),
+      }) as TransactionAnalytics),
 };
 
 // Health check

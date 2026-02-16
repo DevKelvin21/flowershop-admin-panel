@@ -7,47 +7,63 @@ import type {
   TransactionQueryParams,
   PaginatedResponse,
 } from '@/lib/api/types';
+import { inventoryKeys } from './inventory';
+import { normalizeQueryParams } from './query-key-utils';
+
+const TRANSACTION_LIST_STALE_TIME_MS = 60 * 1000;
+const TRANSACTION_DETAIL_STALE_TIME_MS = 3 * 60 * 1000;
+const TRANSACTION_SUMMARY_STALE_TIME_MS = 60 * 1000;
+const TRANSACTION_ANALYTICS_STALE_TIME_MS = 10 * 60 * 1000;
 
 // Query Keys
 export const transactionKeys = {
   all: ['transactions'] as const,
   lists: () => [...transactionKeys.all, 'list'] as const,
-  list: (params?: TransactionQueryParams) => [...transactionKeys.lists(), params] as const,
+  list: (params?: TransactionQueryParams) =>
+    [...transactionKeys.lists(), normalizeQueryParams(params)] as const,
   details: () => [...transactionKeys.all, 'detail'] as const,
   detail: (id: string) => [...transactionKeys.details(), id] as const,
+  summaries: () => [...transactionKeys.all, 'summary'] as const,
   summary: (params?: { startDate?: string; endDate?: string }) =>
-    [...transactionKeys.all, 'summary', params] as const,
-  analytics: (period: string) => [...transactionKeys.all, 'analytics', period] as const,
+    [...transactionKeys.summaries(), normalizeQueryParams(params)] as const,
+  analyticsList: () => [...transactionKeys.all, 'analytics'] as const,
+  analytics: (period: string) => [...transactionKeys.analyticsList(), period] as const,
 };
 
 // Query Options
-export const transactionListOptions = (params?: TransactionQueryParams) =>
+export const transactionListOptions = (
+  params?: TransactionQueryParams,
+) =>
   queryOptions({
     queryKey: transactionKeys.list(params),
     queryFn: () => transactionsApi.list(params),
-    staleTime: 2 * 60 * 1000, // 2 minutes (transactions change more frequently)
+    staleTime: TRANSACTION_LIST_STALE_TIME_MS,
   });
 
 export const transactionDetailOptions = (id: string) =>
   queryOptions({
     queryKey: transactionKeys.detail(id),
     queryFn: () => transactionsApi.get(id),
-    staleTime: 5 * 60 * 1000,
+    staleTime: TRANSACTION_DETAIL_STALE_TIME_MS,
     enabled: !!id,
   });
 
-export const transactionSummaryOptions = (params?: { startDate?: string; endDate?: string }) =>
+export const transactionSummaryOptions = (
+  params?: { startDate?: string; endDate?: string },
+) =>
   queryOptions({
     queryKey: transactionKeys.summary(params),
     queryFn: () => transactionsApi.getSummary(params),
-    staleTime: 2 * 60 * 1000,
+    staleTime: TRANSACTION_SUMMARY_STALE_TIME_MS,
   });
 
-export const transactionAnalyticsOptions = (period: 'week' | 'month' | 'year' = 'month') =>
+export const transactionAnalyticsOptions = (
+  period: 'week' | 'month' | 'year' = 'month',
+) =>
   queryOptions({
     queryKey: transactionKeys.analytics(period),
     queryFn: () => transactionsApi.getAnalytics(period),
-    staleTime: 5 * 60 * 1000,
+    staleTime: TRANSACTION_ANALYTICS_STALE_TIME_MS,
   });
 
 // Hooks
@@ -73,11 +89,16 @@ export function useCreateTransaction() {
 
   return useMutation({
     mutationFn: (data: CreateTransactionDto) => transactionsApi.create(data),
-    onSuccess: () => {
-      // Invalidate transactions and inventory (transactions affect inventory)
-      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: transactionKeys.summary() });
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: transactionKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: transactionKeys.summaries() }),
+        queryClient.invalidateQueries({
+          queryKey: transactionKeys.analyticsList(),
+        }),
+        queryClient.invalidateQueries({ queryKey: inventoryKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: inventoryKeys.details() }),
+      ]);
     },
   });
 }
@@ -89,8 +110,18 @@ export function useUpdateTransaction() {
     mutationFn: ({ id, data }: { id: string; data: UpdateTransactionDto }) =>
       transactionsApi.update(id, data),
     onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: transactionKeys.lists() });
-      const previousLists = queryClient.getQueriesData({ queryKey: transactionKeys.lists() });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: transactionKeys.lists() }),
+        queryClient.cancelQueries({ queryKey: transactionKeys.detail(id) }),
+      ]);
+      const previousLists = queryClient.getQueriesData<
+        PaginatedResponse<Transaction>
+      >({
+        queryKey: transactionKeys.lists(),
+      });
+      const previousDetail = queryClient.getQueryData<Transaction>(
+        transactionKeys.detail(id),
+      );
 
       // Optimistic update
       queryClient.setQueriesData<PaginatedResponse<Transaction>>(
@@ -103,10 +134,18 @@ export function useUpdateTransaction() {
               item.id === id ? { ...item, ...data } : item
             ),
           };
-        }
+        },
       );
 
-      return { previousLists };
+      queryClient.setQueryData<Transaction>(transactionKeys.detail(id), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          ...data,
+        };
+      });
+
+      return { previousLists, previousDetail };
     },
     onError: (_err, _variables, context) => {
       if (context?.previousLists) {
@@ -114,9 +153,18 @@ export function useUpdateTransaction() {
           queryClient.setQueryData(queryKey, data);
         });
       }
+      if (context?.previousDetail) {
+        queryClient.setQueryData(
+          transactionKeys.detail(_variables.id),
+          context.previousDetail,
+        );
+      }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
+    onSettled: async (_data, _error, { id }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: transactionKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: transactionKeys.detail(id) }),
+      ]);
     },
   });
 }
@@ -127,8 +175,18 @@ export function useDeleteTransaction() {
   return useMutation({
     mutationFn: (id: string) => transactionsApi.delete(id),
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: transactionKeys.lists() });
-      const previousLists = queryClient.getQueriesData({ queryKey: transactionKeys.lists() });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: transactionKeys.lists() }),
+        queryClient.cancelQueries({ queryKey: transactionKeys.detail(id) }),
+      ]);
+      const previousLists = queryClient.getQueriesData<
+        PaginatedResponse<Transaction>
+      >({
+        queryKey: transactionKeys.lists(),
+      });
+      const previousDetail = queryClient.getQueryData<Transaction>(
+        transactionKeys.detail(id),
+      );
 
       // Optimistic remove
       queryClient.setQueriesData<PaginatedResponse<Transaction>>(
@@ -138,24 +196,41 @@ export function useDeleteTransaction() {
           return {
             ...old,
             data: old.data.filter((item) => item.id !== id),
-            total: old.total - 1,
+            total: Math.max(0, old.total - 1),
           };
-        }
+        },
       );
 
-      return { previousLists };
+      queryClient.removeQueries({
+        queryKey: transactionKeys.detail(id),
+        exact: true,
+      });
+
+      return { previousLists, previousDetail };
     },
-    onError: (_err, _id, context) => {
+    onError: (_err, id, context) => {
       if (context?.previousLists) {
         context.previousLists.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
         });
       }
+      if (context?.previousDetail) {
+        queryClient.setQueryData(
+          transactionKeys.detail(id),
+          context.previousDetail,
+        );
+      }
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: transactionKeys.summary() });
-      queryClient.invalidateQueries({ queryKey: ['inventory'] }); // Transaction delete reverses inventory
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: transactionKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: transactionKeys.summaries() }),
+        queryClient.invalidateQueries({
+          queryKey: transactionKeys.analyticsList(),
+        }),
+        queryClient.invalidateQueries({ queryKey: inventoryKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: inventoryKeys.details() }),
+      ]);
     },
   });
 }
