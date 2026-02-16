@@ -1,16 +1,16 @@
-import { type ColumnDef } from "@tanstack/react-table"
+import { type ColumnDef } from '@tanstack/react-table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable, type PaginationConfig } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import type { Transaction, TransactionItem } from '@/lib/api/types';
 import { Trash2 } from 'lucide-react';
+import { useTransactionModal } from './TransactionModal/useTransactionModal';
 
 interface TransactionTableProps {
   transactions: Transaction[];
   pagination: PaginationConfig;
   onDelete: (t: Transaction) => void;
-  onRowClick?: (t: Transaction) => void;
   formatCurrency: (amount: number) => string;
 }
 
@@ -138,9 +138,9 @@ export function TransactionTable({
   transactions,
   pagination,
   onDelete,
-  onRowClick,
   formatCurrency,
 }: TransactionTableProps) {
+  const { actions } = useTransactionModal();
   const columns = createColumns(onDelete, formatCurrency);
 
   return (
@@ -148,7 +148,7 @@ export function TransactionTable({
       columns={columns}
       data={transactions}
       pagination={pagination}
-      onRowClick={onRowClick}
+      onRowClick={actions.openView}
       emptyMessage="No hay transacciones para mostrar"
     />
   );

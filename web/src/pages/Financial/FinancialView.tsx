@@ -1,13 +1,17 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Filters } from '@/components/Filters';
 import { ConfirmActionModal } from '@/components/modals/ConfirmActionModal';
-import { TransactionTable } from './components/TransactionTable';
-import { SummaryCards } from './components/SummaryCards';
-import { TransactionModal } from './components/TransactionModal';
-import type { Transaction, TransactionType, ParseTransactionResponse } from '@/lib/api/types';
-import type { TransactionDraft } from './hooks/useAiTransaction';
-import type { PaginationConfig } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
+import type { PaginationConfig } from '@/components/ui/data-table';
+import type { Transaction } from '@/lib/api/types';
+import {
+  AddTransactionModal,
+  EditTransactionModal,
+  useTransactionModal,
+  ViewTransactionModal,
+} from './components/TransactionModal';
+import { SummaryCards } from './components/SummaryCards';
+import { TransactionTable } from './components/TransactionTable';
 
 interface FinancialViewProps {
   tabs: {
@@ -26,34 +30,6 @@ interface FinancialViewProps {
     profit: string;
     transactionCount: number;
   };
-  inventoryOptions: { id: string; item: string; quality: string; quantity: number }[];
-  ui: {
-    confirmDeleteOpen: boolean;
-    selectedTransaction: Transaction | null;
-    onDeleteConfirm: () => void;
-    onDeleteCancel: () => void;
-  };
-  modal: {
-    isOpen: boolean;
-    onOpen: () => void;
-    onClose: () => void;
-  };
-  tableHandlers: {
-    onDelete: (t: Transaction) => void;
-    onRowClick?: (t: Transaction) => void;
-  };
-  transactionForm: {
-    draft: TransactionDraft;
-    aiResult: ParseTransactionResponse | null;
-    isSubmitting: boolean;
-    onSubmit: () => void;
-    onUpdateDraft: (updater: (prev: TransactionDraft) => TransactionDraft) => void;
-    onChangeType: (type: TransactionType) => void;
-    onAiParseSuccess: (result: ParseTransactionResponse) => void;
-    onAiParseError: (error: unknown) => void;
-    onAiAccept: () => void;
-    onAiReject: () => void;
-  };
 }
 
 export function FinancialView({
@@ -62,12 +38,9 @@ export function FinancialView({
   transactions,
   pagination,
   summary,
-  inventoryOptions,
-  ui,
-  modal,
-  tableHandlers,
-  transactionForm,
 }: FinancialViewProps) {
+  const { state: modalState, actions: modalActions } = useTransactionModal();
+
   return (
     <div>
       <Tabs value={tabs.activeTab} onValueChange={(v) => tabs.onTabChange(v as 'sales' | 'expenses' | 'summary')}>
@@ -80,7 +53,11 @@ export function FinancialView({
           {tabs.activeTab !== 'summary' && (
             <Button
               className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-              onClick={modal.onOpen}
+              onClick={() =>
+                modalActions.openAdd(
+                  tabs.activeTab === 'sales' ? 'SALE' : 'EXPENSE',
+                )
+              }
             >
               {tabs.activeTab === 'sales' ? 'Nueva Venta' : 'Nuevo Gasto'}
             </Button>
@@ -100,8 +77,7 @@ export function FinancialView({
           <TransactionTable
             transactions={transactions}
             pagination={pagination}
-            onDelete={tableHandlers.onDelete}
-            onRowClick={tableHandlers.onRowClick}
+            onDelete={modalActions.requestDelete}
             formatCurrency={(amount) =>
               new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount)
             }
@@ -112,8 +88,7 @@ export function FinancialView({
           <TransactionTable
             transactions={transactions}
             pagination={pagination}
-            onDelete={tableHandlers.onDelete}
-            onRowClick={tableHandlers.onRowClick}
+            onDelete={modalActions.requestDelete}
             formatCurrency={(amount) =>
               new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount)
             }
@@ -138,29 +113,17 @@ export function FinancialView({
         </TabsContent>
       </Tabs>
 
-      <TransactionModal
-        open={modal.isOpen}
-        draft={transactionForm.draft}
-        aiResult={transactionForm.aiResult}
-        inventoryOptions={inventoryOptions}
-        isSubmitting={transactionForm.isSubmitting}
-        onClose={modal.onClose}
-        onSubmit={transactionForm.onSubmit}
-        onAiParseSuccess={transactionForm.onAiParseSuccess}
-        onAiParseError={transactionForm.onAiParseError}
-        onAiAccept={transactionForm.onAiAccept}
-        onAiReject={transactionForm.onAiReject}
-        onUpdateDraft={transactionForm.onUpdateDraft}
-        onChangeType={transactionForm.onChangeType}
-      />
+      <AddTransactionModal />
+      <ViewTransactionModal />
+      <EditTransactionModal />
 
       <ConfirmActionModal
-        open={ui.confirmDeleteOpen}
+        open={modalState.confirmDeleteOpen}
         title="Confirmar eliminación"
         message="¿Estás seguro de que deseas eliminar esta transacción? Esta acción revertirá los cambios en el inventario."
-        item={ui.selectedTransaction}
-        onCancel={ui.onDeleteCancel}
-        onConfirm={ui.onDeleteConfirm}
+        item={modalState.transactionToDelete}
+        onCancel={modalActions.cancelDelete}
+        onConfirm={() => void modalActions.confirmDelete()}
         confirmLabel="Eliminar"
         cancelLabel="Cancelar"
       />
