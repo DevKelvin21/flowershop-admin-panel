@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Prisma } from '@prisma/client';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, tap } from 'rxjs/operators';
 import { Request } from 'express';
 import { AuditService } from '../../modules/audit/audit.service';
 import type { AuthenticatedRequest } from '../decorators/current-user.decorator';
@@ -36,10 +36,6 @@ export class AuditLogInterceptor implements NestInterceptor {
       context.getHandler(),
     );
 
-    if (!metadata) {
-      return next.handle();
-    }
-
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const user = request.user;
 
@@ -47,6 +43,13 @@ export class AuditLogInterceptor implements NestInterceptor {
     if (!user) {
       return next.handle();
     }
+
+    // Prevent noise/self-referential logs for audit inspection/ingestion routes.
+    if (this.shouldSkipPath(request.path)) {
+      return next.handle();
+    }
+
+    const resolvedMetadata = metadata ?? this.buildDefaultMetadata(request);
 
     return next.handle().pipe(
       tap((response: unknown) => {
@@ -56,13 +59,24 @@ export class AuditLogInterceptor implements NestInterceptor {
         // Log the operation asynchronously
         void this.auditService.log({
           userId: user.email || user.uid,
-          action: metadata.action,
-          entityType: metadata.entityType,
+          action: resolvedMetadata.action,
+          entityType: resolvedMetadata.entityType,
           entityId,
-          changes: this.extractChanges(request, response),
+          changes: this.extractChanges(request, response, !!metadata),
           ipAddress: this.getClientIp(request),
           userAgent: request.headers['user-agent'],
         });
+      }),
+      catchError((error: unknown) => {
+        void this.auditService.log({
+          userId: user.email || user.uid,
+          action: `${resolvedMetadata.action}_FAILED`,
+          entityType: resolvedMetadata.entityType,
+          changes: this.extractErrorChanges(request, error, !!metadata),
+          ipAddress: this.getClientIp(request),
+          userAgent: request.headers['user-agent'],
+        });
+        return throwError(() => error);
       }),
     );
   }
@@ -79,7 +93,15 @@ export class AuditLogInterceptor implements NestInterceptor {
   private extractChanges(
     request: Request,
     response: unknown,
+    hasExplicitMetadata: boolean,
   ): Prisma.InputJsonValue | undefined {
+    // For inferred logs, capture GET query parameters for request traceability.
+    if (!hasExplicitMetadata && request.method === 'GET') {
+      return this.toJsonValue({
+        query: request.query ?? {},
+      });
+    }
+
     // For POST/PUT/PATCH, include request body
     if (['POST', 'PUT', 'PATCH'].includes(request.method)) {
       const responseValue =
@@ -98,6 +120,77 @@ export class AuditLogInterceptor implements NestInterceptor {
     }
 
     return undefined;
+  }
+
+  private extractErrorChanges(
+    request: Request,
+    error: unknown,
+    hasExplicitMetadata: boolean,
+  ): Prisma.InputJsonValue | undefined {
+    const serializedError = this.isRecord(error)
+      ? {
+          message: typeof error.message === 'string' ? error.message : 'Unknown error',
+          name: typeof error.name === 'string' ? error.name : 'Error',
+          status:
+            typeof error.status === 'number'
+              ? error.status
+              : typeof error.statusCode === 'number'
+                ? error.statusCode
+                : undefined,
+        }
+      : { message: 'Unknown error', name: 'Error' };
+
+    if (hasExplicitMetadata) {
+      return this.toJsonValue({
+        request:
+          ['POST', 'PUT', 'PATCH'].includes(request.method)
+            ? ((request.body as Record<string, unknown>) ?? {})
+            : undefined,
+        error: serializedError,
+      });
+    }
+
+    return this.toJsonValue({
+      query: request.query ?? {},
+      request:
+        ['POST', 'PUT', 'PATCH'].includes(request.method)
+          ? ((request.body as Record<string, unknown>) ?? {})
+          : undefined,
+      error: serializedError,
+    });
+  }
+
+  private buildDefaultMetadata(request: Request): AuditLogMetadata {
+    return {
+      action: this.buildActionFromRequest(request),
+      entityType: this.inferEntityType(request.path),
+    };
+  }
+
+  private buildActionFromRequest(request: Request): string {
+    const method = request.method.toUpperCase();
+    const routePattern = `${request.baseUrl || ''}${request.route?.path || request.path}`;
+    const normalizedPath = routePattern
+      .replace(/[^a-zA-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .toUpperCase();
+
+    return `API_${method}_${normalizedPath || 'ROOT'}`;
+  }
+
+  private inferEntityType(path: string): string {
+    const normalized = path.replace(/^\/+/, '');
+    const segments = normalized.split('/').filter(Boolean);
+    const apiIndex = segments.findIndex((segment) => segment === 'api');
+    const resourceSegment =
+      apiIndex >= 0 ? segments[apiIndex + 2] : segments[0];
+
+    if (!resourceSegment) return 'Api';
+    return resourceSegment.charAt(0).toUpperCase() + resourceSegment.slice(1);
+  }
+
+  private shouldSkipPath(path: string): boolean {
+    return path.startsWith('/api/v1/audit');
   }
 
   private isRecord(value: unknown): value is Record<string, unknown> {

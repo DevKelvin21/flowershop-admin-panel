@@ -1,12 +1,11 @@
 import type { LoggingService } from './logging.service';
+import { apiClient } from '@/lib/api/client';
 
 /**
  * HTTP implementation of LoggingService
- * Sends logs to an external HTTP endpoint
+ * Sends logs to backend audit endpoint
  */
 export class HttpLoggingService implements LoggingService {
-  constructor(private endpoint: string) {}
-
   async logOperation({
     operation_type,
     user_name,
@@ -17,10 +16,15 @@ export class HttpLoggingService implements LoggingService {
     message: string;
   }): Promise<void> {
     try {
-      await fetch(this.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ operation_type, user_name, message }),
+      await apiClient.post<{ success: boolean }>('/audit/event', {
+        action: `FE_${operation_type.toUpperCase()}`,
+        entityType: 'FrontendAuth',
+        message,
+        metadata: {
+          operationType: operation_type,
+          userName: user_name,
+          source: 'web',
+        },
       });
     } catch (err) {
       // Optionally handle logging error - fail silently for logging
@@ -32,9 +36,6 @@ export class HttpLoggingService implements LoggingService {
 /**
  * Factory function to create HTTP logging service
  */
-export function createHttpLoggingService(
-  endpoint: string = 'https://cf-flowershop-logs-hanlder-265978683065.us-central1.run.app/log_operation'
-): LoggingService {
-  return new HttpLoggingService(endpoint);
+export function createHttpLoggingService(): LoggingService {
+  return new HttpLoggingService();
 }
-

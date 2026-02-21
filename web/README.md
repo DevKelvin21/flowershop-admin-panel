@@ -113,4 +113,5 @@ Query keys are normalized and grouped for targeted invalidation.
 ## Notes
 
 - `npm run lint` currently reports only known fast-refresh warnings from shared UI files.
+- Frontend operation logs are sent to backend audit ingestion endpoint (`POST /api/v1/audit/event`) when the user is authenticated.
 - For phase-by-phase implementation history, see `/docs/plans/CODE_IMPROVEMENT_PHASES.md`.

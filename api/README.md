@@ -111,6 +111,14 @@ Core endpoints (prefix `/api/v1`):
 - `/inventory` + losses/history endpoints
 - `/transactions` + summary/analytics endpoints
 - `/ai/parse-transaction`
+- `/audit` (query logs) and `/audit/event` (frontend/custom event ingestion)
+
+### Audit logging behavior
+
+- Decorated mutation routes (`@AuditLog`) are logged with semantic action names.
+- All authenticated API requests are also logged with inferred actions for full request traceability.
+- Failed authenticated requests are logged with `_FAILED` action suffix.
+- Frontend auth/client events can be ingested via `POST /api/v1/audit/event`.
 
 ### AI parse behavior
 

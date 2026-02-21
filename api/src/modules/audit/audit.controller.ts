@@ -1,11 +1,55 @@
-import { Controller, Get, Query, Param } from '@nestjs/common';
+import { Controller, Get, Query, Param, Post, Body, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { AuditService } from './audit.service';
+import { CreateAuditEventDto } from './dto/create-audit-event.dto';
+import {
+  CurrentUser,
+  type FirebaseUser,
+} from '../../common/decorators/current-user.decorator';
+import type { Request } from 'express';
+import { Prisma } from '@prisma/client';
 
 @ApiTags('Audit')
 @Controller({ path: 'audit', version: '1' })
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
+
+  @Post('event')
+  @ApiOperation({
+    summary: 'Create audit event',
+    description:
+      'Create an audit event from frontend or custom clients. User is derived from the auth token.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Audit event stored',
+    schema: {
+      example: {
+        success: true,
+      },
+    },
+  })
+  async createEvent(
+    @Body() dto: CreateAuditEventDto,
+    @CurrentUser() user: FirebaseUser,
+    @Req() request: Request,
+  ) {
+    await this.auditService.log({
+      userId: user.email || user.uid,
+      action: dto.action,
+      entityType: dto.entityType || 'Frontend',
+      entityId: dto.entityId,
+      changes: this.toJsonValue({
+        source: 'frontend',
+        message: dto.message,
+        metadata: dto.metadata,
+      }),
+      ipAddress: this.getClientIp(request),
+      userAgent: request.headers['user-agent'],
+    });
+
+    return { success: true };
+  }
 
   @Get()
   @ApiOperation({
@@ -83,5 +127,18 @@ export class AuditController {
     @Param('id') entityId: string,
   ) {
     return this.auditService.findByEntity(entityType, entityId);
+  }
+
+  private getClientIp(request: Request): string {
+    const forwarded = request.headers['x-forwarded-for'];
+    if (typeof forwarded === 'string') {
+      return forwarded.split(',')[0];
+    }
+    return request.ip || request.socket.remoteAddress || 'unknown';
+  }
+
+  private toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
+    if (value === undefined) return undefined;
+    return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
   }
 }
