@@ -93,6 +93,7 @@ export function useInventoryData() {
 export function useInventoryCommands(
   callbacks: {
     onAddSuccess?: () => void;
+    onBulkAddSuccess?: (count: number) => void;
     onUpdateSuccess?: () => void;
     onDeleteSuccess?: () => void;
     onLossSuccess?: () => void;
@@ -116,6 +117,49 @@ export function useInventoryCommands(
       callbacks.onAddSuccess?.();
     } catch (error) {
       callbacks.onError?.(error);
+    }
+  };
+
+  const addInventoryBulk = async (items: NewInventoryItem[]) => {
+    if (items.length === 0) {
+      callbacks.onError?.(new Error('No hay articulos para agregar'));
+      return;
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    let firstErrorMessage = '';
+
+    for (const item of items) {
+      const dto: CreateInventoryDto = {
+        item: item.item,
+        quality: item.quality,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      };
+
+      try {
+        await createMutation.mutateAsync(dto);
+        successCount += 1;
+      } catch (error) {
+        failedCount += 1;
+        if (!firstErrorMessage) {
+          firstErrorMessage =
+            error instanceof Error ? error.message : 'Error desconocido';
+        }
+      }
+    }
+
+    if (successCount > 0) {
+      callbacks.onBulkAddSuccess?.(successCount);
+    }
+
+    if (failedCount > 0) {
+      callbacks.onError?.(
+        new Error(
+          `No se pudieron agregar ${failedCount} articulo(s). ${firstErrorMessage}`,
+        ),
+      );
     }
   };
 
@@ -157,6 +201,7 @@ export function useInventoryCommands(
 
   return {
     addInventory,
+    addInventoryBulk,
     updateInventory,
     deleteInventory,
     addLoss,

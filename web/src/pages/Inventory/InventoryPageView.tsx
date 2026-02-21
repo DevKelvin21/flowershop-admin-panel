@@ -61,6 +61,7 @@ export interface InventoryPageViewProps {
       onOpen: () => void;
       onClose: () => void;
       onSubmit: (item: NewInventoryItem) => Promise<void> | void;
+      onSubmitBulk: (items: NewInventoryItem[]) => Promise<void> | void;
     };
     addLoss: {
       isOpen: boolean;
@@ -185,6 +186,7 @@ export function InventoryPageView({
         open={modals.addItem.isOpen}
         onCancel={modals.addItem.onClose}
         onConfirm={modals.addItem.onSubmit}
+        onConfirmBulk={modals.addItem.onSubmitBulk}
       />
 
       {/* Add Loss Modal */}

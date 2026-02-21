@@ -51,6 +51,10 @@ export function InventoryContainer() {
       addItemModal.close();
       toast.success('Articulo agregado al inventario');
     },
+    onBulkAddSuccess: (count) => {
+      addItemModal.close();
+      toast.success(`Se agregaron ${count} articulo(s) al inventario`);
+    },
     onUpdateSuccess: () => {
       handleCancelConfirmModal();
       toast.success('Inventario actualizado');
@@ -164,6 +168,7 @@ export function InventoryContainer() {
           onOpen: addItemModal.open,
           onClose: addItemModal.close,
           onSubmit: commands.addInventory,
+          onSubmitBulk: commands.addInventoryBulk,
         },
         addLoss: {
           isOpen: addLossModal.isOpen,
