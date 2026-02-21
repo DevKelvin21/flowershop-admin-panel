@@ -104,6 +104,8 @@ export interface TransactionSummary {
   totalSales: number;
   totalExpenses: number;
   profit: number;
+  salesCount: number;
+  expensesCount: number;
   transactionCount: number;
 }
 
