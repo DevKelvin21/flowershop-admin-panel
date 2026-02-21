@@ -13,6 +13,8 @@ import type {
   PaginatedResponse,
   InventoryQueryParams,
   TransactionQueryParams,
+  AuditLog,
+  AuditQueryParams,
   ParseTransactionRequest,
   ParseTransactionResponse,
 } from './types';
@@ -104,4 +106,17 @@ export const healthApi = {
 export const aiApi = {
   parseTransaction: (data: ParseTransactionRequest) =>
     apiClient.post<ParseTransactionResponse>('/ai/parse-transaction', data),
+};
+
+// Audit API
+export const auditApi = {
+  list: (params?: AuditQueryParams) =>
+    apiClient.get<PaginatedResponse<AuditLog>>(
+      `/audit${buildQueryString(
+        (params as Record<
+          string,
+          string | number | boolean | undefined | null
+        >) || {},
+      )}`,
+    ),
 };

@@ -23,6 +23,7 @@ const navItems = [
     { path: '/', label: 'Reporte' },
     { path: '/inventory', label: 'Inventario' },
     { path: '/financial', label: 'Ventas y Gastos' },
+    { path: '/audit', label: 'Bitácora' },
 ] as const;
 
 export function Navbar({ userEmail, onLogout }: NavbarProps) {

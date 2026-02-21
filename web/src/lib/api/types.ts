@@ -139,6 +139,14 @@ export interface TransactionQueryParams {
   endDate?: string;
 }
 
+export interface AuditQueryParams {
+  page?: number;
+  limit?: number;
+  userId?: string;
+  action?: string;
+  entityType?: string;
+}
+
 // Audit Types
 export interface AuditLog {
   id: string;
