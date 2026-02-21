@@ -18,19 +18,21 @@ interface TransactionModalProviderProps {
   children: ReactNode;
   defaultType: TransactionType;
   inventoryOptions: InventoryOption[];
+  defaultSalesAgent: string;
 }
 
 export function TransactionModalProvider({
   children,
   defaultType,
   inventoryOptions,
+  defaultSalesAgent,
 }: TransactionModalProviderProps) {
   const [mode, setMode] = useState<ModalMode>({ type: 'closed' });
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [transactionToDelete, setTransactionToDelete] =
     useState<Transaction | null>(null);
 
-  const ai = useAiTransaction(defaultType);
+  const ai = useAiTransaction(defaultType, { defaultSalesAgent });
   const commands = useFinancialCommands();
 
   const selectedTransaction =

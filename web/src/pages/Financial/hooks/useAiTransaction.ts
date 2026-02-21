@@ -11,15 +11,24 @@ export interface TransactionDraft {
   items: { inventoryId: string; quantity: number }[];
 }
 
-const emptyDraft: TransactionDraft = {
-  type: 'SALE',
-  paymentMethod: 'CASH',
-  salesAgent: '',
-  customerName: '',
-  notes: '',
-  manualTotalAmount: '',
-  items: [],
-};
+interface UseAiTransactionOptions {
+  defaultSalesAgent?: string;
+}
+
+function createEmptyDraft(
+  type: TransactionType,
+  defaultSalesAgent: string,
+): TransactionDraft {
+  return {
+    type,
+    paymentMethod: 'CASH',
+    salesAgent: defaultSalesAgent,
+    customerName: '',
+    notes: '',
+    manualTotalAmount: '',
+    items: [],
+  };
+}
 
 const DRAFT_STORAGE_KEY = 'financial:transaction-draft:v1';
 const DRAFT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -30,9 +39,12 @@ interface PersistedDraftState {
   draft: TransactionDraft;
 }
 
-function isDraftEmpty(draft: TransactionDraft): boolean {
+function isDraftEmpty(
+  draft: TransactionDraft,
+  defaultSalesAgent: string,
+): boolean {
   return (
-    draft.salesAgent.trim() === '' &&
+    draft.salesAgent.trim() === defaultSalesAgent &&
     draft.customerName.trim() === '' &&
     draft.notes.trim() === '' &&
     draft.manualTotalAmount.trim() === '' &&
@@ -44,7 +56,10 @@ function hasWindow(): boolean {
   return typeof window !== 'undefined';
 }
 
-function loadPersistedDraft(initialType: TransactionType): TransactionDraft | null {
+function loadPersistedDraft(
+  initialType: TransactionType,
+  defaultSalesAgent: string,
+): TransactionDraft | null {
   if (!hasWindow()) return null;
 
   try {
@@ -70,7 +85,7 @@ function loadPersistedDraft(initialType: TransactionType): TransactionDraft | nu
     return {
       type: draft.type || initialType,
       paymentMethod: draft.paymentMethod || 'CASH',
-      salesAgent: draft.salesAgent || '',
+      salesAgent: draft.salesAgent || defaultSalesAgent,
       customerName: draft.customerName || '',
       notes: draft.notes || '',
       manualTotalAmount:
@@ -90,14 +105,24 @@ function loadPersistedDraft(initialType: TransactionType): TransactionDraft | nu
   }
 }
 
-export function useAiTransaction(initialType: TransactionType) {
+export function useAiTransaction(
+  initialType: TransactionType,
+  options: UseAiTransactionOptions = {},
+) {
+  const defaultSalesAgent = options.defaultSalesAgent?.trim() ?? '';
   const [aiResult, setAiResult] = useState<ParseTransactionResponse | null>(null);
-  const [draft, setDraft] = useState<TransactionDraft>({ ...emptyDraft, type: initialType });
+  const [draft, setDraft] = useState<TransactionDraft>(
+    createEmptyDraft(initialType, defaultSalesAgent),
+  );
   const [hydrated, setHydrated] = useState(false);
   const initialTypeRef = useRef(initialType);
+  const initialDefaultSalesAgentRef = useRef(defaultSalesAgent);
 
   useEffect(() => {
-    const persisted = loadPersistedDraft(initialTypeRef.current);
+    const persisted = loadPersistedDraft(
+      initialTypeRef.current,
+      initialDefaultSalesAgentRef.current,
+    );
     if (persisted) {
       setDraft(persisted);
     }
@@ -107,7 +132,7 @@ export function useAiTransaction(initialType: TransactionType) {
   useEffect(() => {
     if (!hydrated || !hasWindow()) return;
 
-    if (isDraftEmpty(draft) && !aiResult) {
+    if (isDraftEmpty(draft, defaultSalesAgent) && !aiResult) {
       window.localStorage.removeItem(DRAFT_STORAGE_KEY);
       return;
     }
@@ -118,10 +143,19 @@ export function useAiTransaction(initialType: TransactionType) {
       draft,
     };
     window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
-  }, [hydrated, draft, aiResult]);
+  }, [hydrated, draft, aiResult, defaultSalesAgent]);
+
+  useEffect(() => {
+    if (!hydrated || draft.salesAgent.trim().length > 0 || aiResult) return;
+
+    setDraft((prev) => ({
+      ...prev,
+      salesAgent: defaultSalesAgent,
+    }));
+  }, [hydrated, draft.salesAgent, aiResult, defaultSalesAgent]);
 
   const resetDraft = (nextType?: TransactionType) => {
-    setDraft({ ...emptyDraft, type: nextType ?? initialType });
+    setDraft(createEmptyDraft(nextType ?? initialType, defaultSalesAgent));
     setAiResult(null);
   };
 
@@ -130,7 +164,7 @@ export function useAiTransaction(initialType: TransactionType) {
     setDraft({
       type: result.type,
       paymentMethod: result.paymentMethod ?? 'CASH',
-      salesAgent: result.salesAgent || '',
+      salesAgent: result.salesAgent || defaultSalesAgent,
       customerName: '',
       notes: result.notes || '',
       manualTotalAmount: String(result.totalAmount || ''),

@@ -7,10 +7,12 @@ import { TransactionModalProvider } from './components/TransactionModal';
 import { FinancialView } from './FinancialView';
 import { useFinancialData } from './hooks/useFinancialData';
 import { useFinancialFilters } from './hooks/useFinancialFilters';
+import { deriveSalesAgentFromEmail } from './utils/salesAgent';
 
 export function FinancialContainer() {
-  useAuth(authService);
+  const { user } = useAuth(authService);
   const [activeTab, setActiveTab] = useState<'sales' | 'expenses' | 'summary'>('sales');
+  const defaultSalesAgent = deriveSalesAgentFromEmail(user?.email);
 
   // Filters & Pagination
   const {
@@ -42,6 +44,7 @@ export function FinancialContainer() {
     <TransactionModalProvider
       defaultType={defaultType}
       inventoryOptions={inventoryOptions}
+      defaultSalesAgent={defaultSalesAgent}
     >
       <FinancialView
         tabs={{
