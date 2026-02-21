@@ -45,6 +45,25 @@ Optional API base URL (defaults to local backend):
 
 - `VITE_API_URL=http://localhost:8000/api/v1`
 
+## Vercel deployment
+
+For client-side routing (TanStack Router), keep the Vercel project root at `/web`
+and use SPA rewrites so direct links like `/inventory` or `/financial` do not
+return `404 NOT_FOUND`.
+
+This repo includes `/web/vercel.json`:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/((?!.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
 ## Architecture highlights
 
 ### Routing
