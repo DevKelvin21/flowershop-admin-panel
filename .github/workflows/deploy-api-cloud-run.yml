@@ -32,7 +32,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate required GitHub variables
+      - name: Validate required GitHub configuration
+        env:
+          REQ_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REQ_DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          REQ_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          REQ_FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          REQ_FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          REQ_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set -euo pipefail
           missing=0
@@ -51,6 +58,22 @@ jobs:
             missing=1
           fi
           if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
+          for key in REQ_DATABASE_URL REQ_DIRECT_URL REQ_FIREBASE_PROJECT_ID REQ_FIREBASE_CLIENT_EMAIL REQ_FIREBASE_PRIVATE_KEY REQ_OPENAI_API_KEY; do
+            if [ -z "${!key:-}" ]; then
+              echo "::error::Missing GitHub repository secret: ${key#REQ_}"
+              missing=1
+            fi
+          done
+
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
+          if [[ "${REQ_FIREBASE_PRIVATE_KEY}" != *"BEGIN PRIVATE KEY"* ]] && [[ "${REQ_FIREBASE_PRIVATE_KEY}" != *"BEGIN RSA PRIVATE KEY"* ]]; then
+            echo "::error::FIREBASE_PRIVATE_KEY appears invalid (missing BEGIN PRIVATE KEY header)"
             exit 1
           fi
 
