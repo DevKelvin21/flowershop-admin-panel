@@ -45,6 +45,7 @@ export interface AddLossDto {
 // Transaction Types
 export type TransactionType = 'SALE' | 'EXPENSE';
 export type PaymentMethod = 'CASH' | 'BANK_TRANSFER';
+export type UserRole = 'OWNER' | 'STAFF';
 
 export interface Transaction {
   id: string;
@@ -145,6 +146,24 @@ export interface AuditQueryParams {
   userId?: string;
   action?: string;
   entityType?: string;
+}
+
+export interface AppUser {
+  id: string;
+  firebaseUid?: string | null;
+  email: string;
+  displayName?: string | null;
+  role: UserRole;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UsersQueryParams {
+  page?: number;
+  limit?: number;
+  email?: string;
+  role?: UserRole;
 }
 
 // Audit Types

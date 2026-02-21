@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, Navigate } from '@tanstack/react-router';
 import { Navbar } from '../components/Navbar';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useAuth } from '../hooks/useAuth';
+import { useUsersMe } from '@/hooks/queries/users';
 import { authService } from '../services';
 import { Flower2 } from 'lucide-react';
 
@@ -11,6 +12,7 @@ export const Route = createFileRoute('/_authenticated')({
 
 function AuthenticatedLayout() {
   const { user, loading, signOut } = useAuth(authService);
+  const appUserQuery = useUsersMe(Boolean(user));
 
   const handleLogout = async () => {
     try {
@@ -46,7 +48,11 @@ function AuthenticatedLayout() {
               </p>
             </div>
           </div>
-          <Navbar userEmail={user.email} onLogout={handleLogout} />
+          <Navbar
+            userEmail={user.email}
+            userRole={appUserQuery.data?.role}
+            onLogout={handleLogout}
+          />
         </div>
       </header>
       <main className="mx-auto flex w-full max-w-[1520px] flex-1 flex-col p-4 md:p-6">

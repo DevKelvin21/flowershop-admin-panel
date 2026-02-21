@@ -15,6 +15,9 @@ import type {
   TransactionQueryParams,
   AuditLog,
   AuditQueryParams,
+  AppUser,
+  UsersQueryParams,
+  UserRole,
   ParseTransactionRequest,
   ParseTransactionResponse,
 } from './types';
@@ -119,4 +122,22 @@ export const auditApi = {
         >) || {},
       )}`,
     ),
+};
+
+// Users API
+export const usersApi = {
+  me: () => apiClient.get<AppUser>('/users/me'),
+
+  list: (params?: UsersQueryParams) =>
+    apiClient.get<PaginatedResponse<AppUser>>(
+      `/users${buildQueryString(
+        (params as Record<
+          string,
+          string | number | boolean | undefined | null
+        >) || {},
+      )}`,
+    ),
+
+  updateRole: (id: string, role: UserRole) =>
+    apiClient.patch<AppUser>(`/users/${id}/role`, { role }),
 };
