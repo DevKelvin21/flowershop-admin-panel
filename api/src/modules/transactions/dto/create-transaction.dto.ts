@@ -7,10 +7,10 @@ import {
   IsOptional,
   IsArray,
   ValidateNested,
-  ArrayMinSize,
   MinLength,
   Min,
   Max,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TransactionType, PaymentMethod } from '@prisma/client';
@@ -123,19 +123,23 @@ export class CreateTransactionDto {
   @Type(() => Number)
   totalAmount?: number;
 
-  @ApiProperty({
-    description: 'Transaction items',
+  @ApiPropertyOptional({
+    description:
+      'Transaction items. Required for SALE transactions. Must be omitted for EXPENSE transactions.',
     type: [TransactionItemDto],
     example: [
       { inventoryId: 'clx123...', quantity: 12 },
       { inventoryId: 'clx456...', quantity: 5 },
     ],
   })
+  @ValidateIf(
+    (object: CreateTransactionDto) =>
+      object.type === TransactionType.SALE || object.items !== undefined,
+  )
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => TransactionItemDto)
-  items: TransactionItemDto[];
+  items?: TransactionItemDto[];
 
   @ApiPropertyOptional({
     description: 'AI metadata if transaction was parsed by AI',

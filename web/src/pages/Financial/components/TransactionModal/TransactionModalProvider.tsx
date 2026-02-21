@@ -57,13 +57,18 @@ export function TransactionModalProvider({
   };
 
   const submit = async () => {
-    if (ai.draft.items.length === 0) {
+    if (ai.draft.type === 'SALE' && ai.draft.items.length === 0) {
       toast.error('Debe agregar al menos un articulo');
       return;
     }
 
     const normalizedTotal = ai.draft.manualTotalAmount.trim();
     let manualTotalAmount: number | undefined;
+
+    if (ai.draft.type === 'EXPENSE' && normalizedTotal.length === 0) {
+      toast.error('Para gastos debes ingresar el total manual');
+      return;
+    }
 
     if (normalizedTotal.length > 0) {
       const parsedTotal = Number(normalizedTotal);
@@ -81,8 +86,8 @@ export function TransactionModalProvider({
       customerName: ai.draft.customerName || undefined,
       notes: ai.draft.notes || undefined,
       totalAmount: manualTotalAmount,
-      items: ai.draft.items,
-      aiMetadata: ai.aiResult
+      items: ai.draft.type === 'SALE' ? ai.draft.items : undefined,
+      aiMetadata: ai.draft.type === 'SALE' && ai.aiResult
         ? {
             userPrompt: ai.aiResult.originalPrompt,
             aiResponse: ai.aiResult.rawAiResponse,

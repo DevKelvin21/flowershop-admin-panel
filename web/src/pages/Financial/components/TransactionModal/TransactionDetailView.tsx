@@ -55,7 +55,11 @@ export function TransactionDetailView({ transaction }: TransactionDetailViewProp
 
       <div>
         <p className="mb-2 text-sm font-medium">Articulos</p>
-        {transaction.items && transaction.items.length > 0 ? (
+        {transaction.type === 'EXPENSE' ? (
+          <p className="text-sm text-muted-foreground">
+            No aplica para gastos no ligados a inventario.
+          </p>
+        ) : transaction.items && transaction.items.length > 0 ? (
           <div className="space-y-2">
             {transaction.items.map((item) => {
               const itemLabel = item.inventory?.quality

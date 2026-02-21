@@ -85,7 +85,7 @@ export interface CreateTransactionDto {
   customerName?: string;
   notes?: string;
   totalAmount?: number;
-  items: {
+  items?: {
     inventoryId: string;
     quantity: number;
   }[];

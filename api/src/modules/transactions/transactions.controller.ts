@@ -36,7 +36,7 @@ export class TransactionsController {
   @ApiOperation({
     summary: 'Create new transaction',
     description:
-      'Create a sale or expense transaction. Automatically updates inventory quantities.',
+      'Create a sale or expense transaction. Inventory quantities are updated only for sales.',
   })
   @ApiResponse({
     status: 201,

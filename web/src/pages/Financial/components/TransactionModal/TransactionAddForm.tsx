@@ -15,6 +15,7 @@ function formatCurrency(amount: number) {
 export function TransactionAddForm() {
   const { state, actions } = useTransactionModal();
   const { draft, aiResult, inventoryOptions } = state;
+  const isSale = draft.type === 'SALE';
 
   const suggestedTotal = useMemo(() => {
     if (draft.items.length === 0) return 0;
@@ -66,6 +67,7 @@ export function TransactionAddForm() {
                 actions.updateDraft((prev) => ({
                   ...prev,
                   type: e.target.value as TransactionType,
+                  items: e.target.value === 'EXPENSE' ? [] : prev.items,
                 }))
               }
             >
@@ -134,79 +136,87 @@ export function TransactionAddForm() {
               }
               min={0}
               step="0.01"
-              placeholder="Opcional"
+              placeholder={isSale ? 'Opcional' : 'Obligatorio para gastos'}
             />
-            <p className="mt-1 text-xs text-muted-foreground">
-              Sugerido por inventario: {formatCurrency(suggestedTotal)}.
-              Si lo dejas vacio, se usa el calculado automaticamente.
-            </p>
+            {isSale ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Sugerido por inventario: {formatCurrency(suggestedTotal)}.
+                Si lo dejas vacio, se usa el calculado automaticamente.
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Para gastos no ligados a inventario, ingresa el total pagado.
+              </p>
+            )}
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">Articulos</label>
-            {draft.items.map((item, idx) => (
-              <div key={idx} className="mb-2 flex gap-2">
-                <select
-                  className="flex-1 rounded border border-border bg-background px-3 py-2"
-                  value={item.inventoryId}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    actions.updateDraft((prev) => {
-                      const nextItems = [...prev.items];
-                      nextItems[idx] = { ...nextItems[idx], inventoryId: value };
-                      return { ...prev, items: nextItems };
-                    });
-                  }}
-                >
-                  <option value="">Seleccionar articulo</option>
-                  {inventoryOptions.map((inv) => (
-                    <option key={inv.id} value={inv.id}>
-                      {inv.item} ({inv.quality}) - {inv.quantity} disponibles
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  className="w-20 rounded border border-border bg-background px-3 py-2"
-                  value={item.quantity}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value, 10) || 0;
-                    actions.updateDraft((prev) => {
-                      const nextItems = [...prev.items];
-                      nextItems[idx] = { ...nextItems[idx], quantity: value };
-                      return { ...prev, items: nextItems };
-                    });
-                  }}
-                  min={1}
-                  placeholder="Cant."
-                />
-                <button
-                  type="button"
-                  className="px-2 text-destructive hover:text-destructive/80"
-                  onClick={() =>
-                    actions.updateDraft((prev) => ({
-                      ...prev,
-                      items: prev.items.filter((_, i) => i !== idx),
-                    }))
-                  }
-                >
-                  x
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="text-sm text-primary hover:underline"
-              onClick={() =>
-                actions.updateDraft((prev) => ({
-                  ...prev,
-                  items: [...prev.items, { inventoryId: '', quantity: 1 }],
-                }))
-              }
-            >
-              + Agregar articulo
-            </button>
-          </div>
+          {isSale ? (
+            <div>
+              <label className="mb-2 block text-sm font-medium">Articulos</label>
+              {draft.items.map((item, idx) => (
+                <div key={idx} className="mb-2 flex gap-2">
+                  <select
+                    className="flex-1 rounded border border-border bg-background px-3 py-2"
+                    value={item.inventoryId}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      actions.updateDraft((prev) => {
+                        const nextItems = [...prev.items];
+                        nextItems[idx] = { ...nextItems[idx], inventoryId: value };
+                        return { ...prev, items: nextItems };
+                      });
+                    }}
+                  >
+                    <option value="">Seleccionar articulo</option>
+                    {inventoryOptions.map((inv) => (
+                      <option key={inv.id} value={inv.id}>
+                        {inv.item} ({inv.quality}) - {inv.quantity} disponibles
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="number"
+                    className="w-20 rounded border border-border bg-background px-3 py-2"
+                    value={item.quantity}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value, 10) || 0;
+                      actions.updateDraft((prev) => {
+                        const nextItems = [...prev.items];
+                        nextItems[idx] = { ...nextItems[idx], quantity: value };
+                        return { ...prev, items: nextItems };
+                      });
+                    }}
+                    min={1}
+                    placeholder="Cant."
+                  />
+                  <button
+                    type="button"
+                    className="px-2 text-destructive hover:text-destructive/80"
+                    onClick={() =>
+                      actions.updateDraft((prev) => ({
+                        ...prev,
+                        items: prev.items.filter((_, i) => i !== idx),
+                      }))
+                    }
+                  >
+                    x
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="text-sm text-primary hover:underline"
+                onClick={() =>
+                  actions.updateDraft((prev) => ({
+                    ...prev,
+                    items: [...prev.items, { inventoryId: '', quantity: 1 }],
+                  }))
+                }
+              >
+                + Agregar articulo
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

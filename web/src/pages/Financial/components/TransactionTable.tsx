@@ -45,6 +45,14 @@ function createColumns(
       id: "items",
       header: "Artículos",
       cell: ({ row }) => {
+        if (row.original.type === 'EXPENSE') {
+          return (
+            <div className="max-w-[250px]">
+              <Badge variant="secondary">No aplica</Badge>
+            </div>
+          );
+        }
+
         const items = row.original.items;
         const summary = formatItemsSummary(items);
         const itemCount = items?.length || 0;

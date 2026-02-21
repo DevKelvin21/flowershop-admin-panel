@@ -23,84 +23,104 @@ export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateTransactionDto, userId: string) {
-    // Validate all inventory items exist and have sufficient quantity
-    const inventoryItems = await this.prisma.inventory.findMany({
-      where: {
-        id: { in: dto.items.map((item) => item.inventoryId) },
-        isActive: true,
-      },
-    });
+    const items = dto.items ?? [];
+    const isSale = dto.type === TransactionType.SALE;
 
-    if (inventoryItems.length !== dto.items.length) {
+    if (isSale && items.length === 0) {
       throw new BadRequestException(
-        'One or more inventory items not found or inactive',
+        'Sale transactions require at least one inventory item',
       );
     }
 
-    // Check inventory availability and calculate amounts
+    if (!isSale && items.length > 0) {
+      throw new BadRequestException(
+        'Expense transactions cannot include inventory items',
+      );
+    }
+
+    // Check inventory availability and calculate amounts for sales
     const transactionItems: PricedTransactionItem[] = [];
     const calculatedSubtotals: Decimal[] = [];
     let totalAmount = new Decimal(0);
 
-    for (const item of dto.items) {
-      const inventory = inventoryItems.find(
-        (inv) => inv.id === item.inventoryId,
-      );
+    if (isSale) {
+      const inventoryItems = await this.prisma.inventory.findMany({
+        where: {
+          id: { in: items.map((item) => item.inventoryId) },
+          isActive: true,
+        },
+      });
 
-      if (!inventory) {
+      if (inventoryItems.length !== items.length) {
         throw new BadRequestException(
-          `Inventory item ${item.inventoryId} not found`,
+          'One or more inventory items not found or inactive',
         );
       }
 
-      // For sales, check if we have enough inventory
-      if (dto.type === TransactionType.SALE) {
+      for (const item of items) {
+        const inventory = inventoryItems.find(
+          (inv) => inv.id === item.inventoryId,
+        );
+
+        if (!inventory) {
+          throw new BadRequestException(
+            `Inventory item ${item.inventoryId} not found`,
+          );
+        }
+
+        // For sales, check if we have enough inventory
         if (inventory.quantity < item.quantity) {
           throw new BadRequestException(
             `Insufficient inventory for ${inventory.item} (${inventory.quality}). ` +
               `Available: ${inventory.quantity}, Requested: ${item.quantity}`,
           );
         }
+
+        const unitPrice = inventory.unitPrice;
+        const subtotal = unitPrice.mul(item.quantity);
+        totalAmount = totalAmount.add(subtotal);
+        calculatedSubtotals.push(subtotal);
+
+        transactionItems.push({
+          inventoryId: item.inventoryId,
+          quantity: item.quantity,
+          unitPrice,
+          subtotal,
+        });
       }
-
-      const unitPrice = inventory.unitPrice;
-      const subtotal = unitPrice.mul(item.quantity);
-      totalAmount = totalAmount.add(subtotal);
-      calculatedSubtotals.push(subtotal);
-
-      transactionItems.push({
-        inventoryId: item.inventoryId,
-        quantity: item.quantity,
-        unitPrice,
-        subtotal,
-      });
     }
 
     if (dto.totalAmount !== undefined) {
       const manualTotalAmount = new Decimal(dto.totalAmount);
       totalAmount = manualTotalAmount;
 
-      const weights =
-        totalAmount.gt(0) && calculatedSubtotals.some((value) => value.gt(0))
-          ? calculatedSubtotals.map((value) => value.toNumber())
-          : dto.items.map((item) => item.quantity);
+      if (isSale) {
+        const weights =
+          totalAmount.gt(0) && calculatedSubtotals.some((value) => value.gt(0))
+            ? calculatedSubtotals.map((value) => value.toNumber())
+            : items.map((item) => item.quantity);
 
-      const distributedSubtotals = this.distributeAmountByWeight(
-        manualTotalAmount,
-        weights,
+        const distributedSubtotals = this.distributeAmountByWeight(
+          manualTotalAmount,
+          weights,
+        );
+
+        transactionItems.forEach((item, index) => {
+          const subtotal = distributedSubtotals[index] ?? new Decimal(0);
+          const quantity = item.quantity > 0 ? item.quantity : 1;
+          item.subtotal = subtotal;
+          item.unitPrice = subtotal
+            .div(quantity)
+            .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+        });
+      }
+    } else if (!isSale) {
+      throw new BadRequestException(
+        'Expense transactions require a manual total amount',
       );
-
-      transactionItems.forEach((item, index) => {
-        const subtotal = distributedSubtotals[index] ?? new Decimal(0);
-        const quantity = item.quantity > 0 ? item.quantity : 1;
-        item.subtotal = subtotal;
-        item.unitPrice = subtotal
-          .div(quantity)
-          .toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
-      });
     }
 
-    // Create transaction with items and update inventory in a database transaction
+    // Create transaction and update inventory for sales
     const result = await this.prisma.$transaction(async (tx) => {
       // Create the transaction
       const transaction = await tx.transaction.create({
@@ -112,9 +132,13 @@ export class TransactionsService {
           customerName: dto.customerName,
           notes: dto.notes,
           createdBy: userId,
-          items: {
-            create: transactionItems,
-          },
+          ...(transactionItems.length > 0
+            ? {
+                items: {
+                  create: transactionItems,
+                },
+              }
+            : {}),
         },
         include: {
           items: {
@@ -144,25 +168,15 @@ export class TransactionsService {
         });
       }
 
-      // Update inventory quantities
-      for (const item of dto.items) {
-        if (dto.type === TransactionType.SALE) {
+      // Update inventory quantities for sales only
+      if (isSale) {
+        for (const item of items) {
           // Decrement for sales
           await tx.inventory.update({
             where: { id: item.inventoryId },
             data: {
               quantity: {
                 decrement: item.quantity,
-              },
-            },
-          });
-        } else {
-          // Increment for expenses (purchases)
-          await tx.inventory.update({
-            where: { id: item.inventoryId },
-            data: {
-              quantity: {
-                increment: item.quantity,
               },
             },
           });
