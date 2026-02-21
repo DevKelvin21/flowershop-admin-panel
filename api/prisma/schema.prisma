@@ -75,6 +75,11 @@ enum PaymentMethod {
   BANK_TRANSFER
 }
 
+enum UserRole {
+  OWNER
+  STAFF
+}
+
 model TransactionItem {
   id             String      @id @default(cuid())
   transactionId  String
@@ -120,4 +125,17 @@ model AuditLog {
 
   @@index([userId, timestamp])
   @@index([entityType, entityId])
+}
+
+model AppUser {
+  id          String    @id @default(cuid())
+  firebaseUid String?   @unique
+  email       String    @unique
+  displayName String?
+  role        UserRole  @default(STAFF)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([role, isActive])
 }
